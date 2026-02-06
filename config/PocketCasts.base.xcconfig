@@ -8,6 +8,6 @@ MARKETING_VERSION = $(VERSION_SHORT)
 CURRENT_PROJECT_VERSION = $(VERSION_LONG)
 
 // Define a root bundle identifier so that extensions can append to it
-PRODUCT_BUNDLE_IDENTIFIER_ROOT = au.com.shiftyjelly.podcasts
+PRODUCT_BUNDLE_IDENTIFIER_ROOT = com.colemanoei.comppodcast
 
-DEVELOPMENT_TEAM = PZYM8XX95Q // Automattic, Inc. (Company)
+DEVELOPMENT_TEAM = R35MH2L54T
