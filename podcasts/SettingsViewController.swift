@@ -12,6 +12,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case about, pocketCastsPlus, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
+        case dreaming
         case developer, beta
 
         /// Whether the section should be displayed or not
@@ -70,6 +71,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.upNextHistory, .init(named: "upnext"))
             case .foldersHistory:
                 return (L10n.foldersHistory, .init(named: "folder-empty"))
+            case .dreaming:
+                return ("Dreaming", UIImage(systemName: "moon.zzz.fill"))
             }
         }
     }
@@ -92,6 +95,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.storageAndDataUse, .siriShortcuts, .headphoneControls, .watch, .customFiles],
             [.importSteps, .opml],
             [.upNextHistory, .foldersHistory],
+            [.dreaming],
             [.privacy, .about]
         ]
     }()
@@ -207,6 +211,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case .foldersHistory:
             let foldersHistoryViewController = FolderHistoryViewController()
             navigationController?.pushViewController(foldersHistoryViewController, animated: true)
+        case .dreaming:
+            navigationController?.pushViewController(DreamingSettingsViewController(), animated: true)
         }
     }
 

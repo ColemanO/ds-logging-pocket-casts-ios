@@ -1092,6 +1092,16 @@ class PlaybackManager: ServerPlaybackDelegate {
                 ApiServerHandler.shared.saveCompleted(episode: episode)
             }
 
+            if DreamingManager.shared.hasToken {
+                let podcastTitle: String?
+                if let ep = episode as? Episode {
+                    podcastTitle = DataManager.sharedManager.findPodcast(uuid: ep.podcastUuid)?.title
+                } else {
+                    podcastTitle = nil
+                }
+                DreamingManager.shared.logEpisodeCompletion(episode: episode, podcastTitle: podcastTitle)
+            }
+
             // if marking an episode as played means the it should be archived, then do that
             if EpisodeManager.shouldArchiveOnCompletion(episode: episode) {
                 if let episode = episode as? Episode {

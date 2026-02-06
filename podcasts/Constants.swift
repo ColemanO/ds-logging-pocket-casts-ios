@@ -59,6 +59,7 @@ struct Constants {
         static let manyEpisodesChanged = NSNotification.Name(rawValue: "SJManyEpisodesChanged")
         static let episodeTranscriptAvailabilityChanged = NSNotification.Name(rawValue: "SJEpisodeTranscriptAvailabilityChanged")
         static let listeningHistoryChanged = NSNotification.Name(rawValue: "SJListeningHistoryChanged")
+        static let dreamingLogStatusChanged = NSNotification.Name(rawValue: "SJDreamingLogStatusChanged")
 
         // podcast notifications
         static let podcastUpdated = NSNotification.Name(rawValue: "SJPodcastUpdated")

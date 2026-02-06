@@ -85,6 +85,18 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
 
     @IBOutlet weak var episodeImageLeadConstraint: NSLayoutConstraint!
 
+    private lazy var dreamingIndicator: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        imageView.isHidden = true
+        NSLayoutConstraint.activate([
+            imageView.widthAnchor.constraint(equalToConstant: 16),
+            imageView.heightAnchor.constraint(equalToConstant: 16)
+        ])
+        return imageView
+    }()
+
     var hidesArtwork = false
 
     var playlist: AutoplayHelper.Playlist?
@@ -129,6 +141,11 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: ServerNotifications.userEpisodeUploadStatusChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(uploadProgressDidUpdate), name: ServerNotifications.userEpisodeUploadProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(reloadArtwork(_:)), name: Constants.Notifications.userEpisodeUpdated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(updateCellFromSpecificEvent(_:)), name: Constants.Notifications.dreamingLogStatusChanged, object: nil)
+
+        if let infoStackView = informationLabel.superview as? UIStackView {
+            infoStackView.insertArrangedSubview(dreamingIndicator, at: 0)
+        }
 
         updateSize()
     }
@@ -218,6 +235,23 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
             bookmarkIcon.image = UIImage(named: "bookmark-icon-episode")
             bookmarkIcon.tintColor = mainTintColor
             bookmarkIcon.isHidden = !showBookmarksIcon
+
+            if let status = DreamingManager.shared.logStatus(for: episode.uuid) {
+                dreamingIndicator.isHidden = false
+                switch status {
+                case .success:
+                    dreamingIndicator.image = UIImage(systemName: "checkmark.circle.fill")
+                    dreamingIndicator.tintColor = ThemeColor.support02()
+                case .failure:
+                    dreamingIndicator.image = UIImage(systemName: "exclamationmark.circle.fill")
+                    dreamingIndicator.tintColor = ThemeColor.support05()
+                case .pending:
+                    dreamingIndicator.image = UIImage(systemName: "clock.fill")
+                    dreamingIndicator.tintColor = ThemeColor.primaryIcon02()
+                }
+            } else {
+                dreamingIndicator.isHidden = true
+            }
 
             let hideStatus = !episode.archived && !episode.wasDeleted && !episode.downloaded(pathFinder: DownloadManager.shared) && !episode.downloadFailed() && !uploadFailed && !episode.playbackError()
             if !hideStatus {
@@ -351,6 +385,16 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         }
         if let userEpisode = episode as? UserEpisode, userEpisode.uploaded() {
             desc.append(L10n.statusUploaded)
+        }
+        if let status = DreamingManager.shared.logStatus(for: episode.uuid) {
+            switch status {
+            case .success:
+                desc.append("Dreaming logged")
+            case .failure:
+                desc.append("Dreaming log failed")
+            case .pending:
+                desc.append("Dreaming log pending")
+            }
         }
         if isMultiSelectEnabled {
             if showTick {
@@ -531,6 +575,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         showTick = false
         shouldShowSelect = false
         actionButton.isHidden = false
+        dreamingIndicator.isHidden = true
 
         updateSize()
     }
@@ -593,6 +638,7 @@ class EpisodeCell: ThemeableSwipeCell, MainEpisodeActionViewDelegate {
         updateSizeConstraints(of: bookmarkIcon, to: iconSize)
         updateSizeConstraints(of: starIndicator, to: iconSize)
         updateSizeConstraints(of: downloadingIndicator, to: iconSize)
+        updateSizeConstraints(of: dreamingIndicator, to: iconSize)
 
         let tickSize = max(24, metric.scaledValue(for: 24))
         updateSizeConstraints(of: selectTickImageView, to: tickSize)
