@@ -66,7 +66,10 @@ class DreamingManager {
 
         let episodeUuid = episode.uuid
         let duration = episode.duration
-        let description = podcastTitle ?? "Unknown Podcast"
+        var description = podcastTitle ?? "Unknown Podcast"
+        if let ep = episode as? Episode, ep.episodeNumber > 0 {
+            description += " - Ep \(ep.episodeNumber)"
+        }
 
         setLogStatus(.pending, for: episodeUuid)
 
