@@ -38,6 +38,8 @@ class EpisodeManager: NSObject {
         if userInitiated {
             analyticsHelper.markAsPlayed(episode: episode)
         }
+
+        DreamingManager.shared.logEpisodeCompletions(episodes: [episode])
     }
 
     class func bulkMarkAsPlayed(episodes: [BaseEpisode], updateSyncFlag: Bool) {
@@ -101,6 +103,8 @@ class EpisodeManager: NSObject {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
 
         analyticsHelper.bulkMarkAsPlayed(count: episodesMinusCurrent.count)
+
+        DreamingManager.shared.logEpisodeCompletions(episodes: episodes)
     }
 
     class func deleteDownloadedFiles(episode: BaseEpisode, userInitated: Bool = false) {
