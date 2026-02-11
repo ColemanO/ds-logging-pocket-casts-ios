@@ -11,6 +11,7 @@ class DreamingProgressViewController: PCViewController {
     // MARK: - UI Elements
 
     private let scrollView = UIScrollView()
+    private let refreshControl = UIRefreshControl()
     private let stackView = UIStackView()
     private let emptyStateLabel = UILabel()
 
@@ -73,8 +74,10 @@ class DreamingProgressViewController: PCViewController {
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
 
-        // Scroll view + stack
+        // Scroll view + pull to refresh
         scrollView.translatesAutoresizingMaskIntoConstraints = false
+        refreshControl.addTarget(self, action: #selector(handlePullToRefresh), for: .valueChanged)
+        scrollView.refreshControl = refreshControl
         view.addSubview(scrollView)
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -280,6 +283,7 @@ class DreamingProgressViewController: PCViewController {
         guard hasToken else { return }
 
         DreamingManager.shared.refreshProgressData { [weak self] in
+            self?.refreshControl.endRefreshing()
             self?.updateCards()
         }
     }
@@ -383,6 +387,10 @@ class DreamingProgressViewController: PCViewController {
     }
 
     // MARK: - Notifications
+
+    @objc private func handlePullToRefresh() {
+        refreshData()
+    }
 
     @objc private func handleLogStatusChanged() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
