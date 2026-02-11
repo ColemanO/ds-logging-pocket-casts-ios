@@ -53,19 +53,12 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .filter, .discover, .upNext, .dreaming, .profile]
+        pcTabs = [.podcasts, .discover, .upNext, .dreaming, .profile]
 
         var vcsInTab = [UIViewController]()
 
         let podcastsController = PodcastListViewController()
         podcastsController.tabBarItem = UITabBarItem(title: L10n.podcastsPlural, image: UIImage(named: "podcasts_tab"), tag: pcTabs.firstIndex(of: .podcasts)!)
-
-        let filtersViewController = PlaylistsViewController()
-        if FeatureFlag.playlistsRebranding.enabled {
-            filtersViewController.tabBarItem = UITabBarItem(title: L10n.playlists, image: UIImage(named: "playlists_tab"), tag: pcTabs.firstIndex(of: .filter)!)
-        } else {
-            filtersViewController.tabBarItem = UITabBarItem(title: L10n.filters, image: UIImage(named: "filters_tab"), tag: pcTabs.firstIndex(of: .filter)!)
-        }
 
         let discoverViewController = DiscoverCollectionViewController(coordinator: DiscoverCoordinator())
 
@@ -80,7 +73,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let dreamingViewController = DreamingProgressViewController()
         dreamingViewController.tabBarItem = UITabBarItem(title: "Dreaming", image: UIImage(systemName: "chart.bar.fill"), tag: pcTabs.firstIndex(of: .dreaming)!)
 
-        vcsInTab = [podcastsController, filtersViewController, discoverViewController, upNextViewController, dreamingViewController, profileViewController]
+        vcsInTab = [podcastsController, discoverViewController, upNextViewController, dreamingViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
