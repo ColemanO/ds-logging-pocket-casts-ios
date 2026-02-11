@@ -792,6 +792,7 @@
 		9E2A72C35884B71C45856DFA /* VoiceBoostN.c in Sources */ = {isa = PBXBuildFile; fileRef = 14DD11DB5830A48ACE6928B2 /* VoiceBoostN.c */; };
 		AA0000000000000000000003 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
 		AA0000000000000000000004 /* DreamingSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002 /* DreamingSettingsViewController.swift */; };
+		AA0000000000000000000009 /* DreamingProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000008 /* DreamingProgressViewController.swift */; };
 		B7E0F1A52D4A1B5600123456 /* ProfileRefreshButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0F1A42D4A1B5600123456 /* ProfileRefreshButton.swift */; };
 		BD00CB2B24BD20CD00A10257 /* TimeStepperCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD00CB2924BD20CD00A10257 /* TimeStepperCell.swift */; };
 		BD00CB2C24BD20CD00A10257 /* TimeStepperCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = BD00CB2A24BD20CD00A10257 /* TimeStepperCell.xib */; };
@@ -2983,6 +2984,7 @@
 		9AF646962E5E0BB700627836 /* PlaylistDetailViewController+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PlaylistDetailViewController+Search.swift"; sourceTree = "<group>"; };
 		AA0000000000000000000001 /* DreamingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingManager.swift; sourceTree = "<group>"; };
 		AA0000000000000000000002 /* DreamingSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingSettingsViewController.swift; sourceTree = "<group>"; };
+		AA0000000000000000000008 /* DreamingProgressViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingProgressViewController.swift; sourceTree = "<group>"; };
 		B7E0F1A42D4A1B5600123456 /* ProfileRefreshButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileRefreshButton.swift; sourceTree = "<group>"; };
 		BD00CB2924BD20CD00A10257 /* TimeStepperCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeStepperCell.swift; sourceTree = "<group>"; };
 		BD00CB2A24BD20CD00A10257 /* TimeStepperCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TimeStepperCell.xib; sourceTree = "<group>"; };
@@ -5719,6 +5721,7 @@
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000001 /* DreamingManager.swift */,
+				AA0000000000000000000008 /* DreamingProgressViewController.swift */,
 				AA0000000000000000000002 /* DreamingSettingsViewController.swift */,
 			);
 			path = Dreaming;
@@ -10280,6 +10283,7 @@
 			files = (
 				AA0000000000000000000003 /* DreamingManager.swift in Sources */,
 				AA0000000000000000000004 /* DreamingSettingsViewController.swift in Sources */,
+				AA0000000000000000000009 /* DreamingProgressViewController.swift in Sources */,
 				BD424B0B2575F30800C9447B /* PodcastDisclosureCell.swift in Sources */,
 				4029E3E42293AD410003BEEB /* ChangePasswordViewController.swift in Sources */,
 				C7318EAA2A624CB400EAFA9C /* BookmarkEditViewModel.swift in Sources */,

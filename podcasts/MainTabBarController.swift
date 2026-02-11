@@ -8,7 +8,7 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, discover, profile, upNext }
+    enum Tab: Int { case podcasts, filter, discover, profile, upNext, dreaming }
 
     var pcTabs = [Tab]()
 
@@ -53,7 +53,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .filter, .discover, .upNext, .profile]
+        pcTabs = [.podcasts, .filter, .discover, .upNext, .dreaming, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -76,7 +76,11 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
         upNextViewController.tabBarItem = UITabBarItem(title: L10n.upNext, image: UIImage(named: "upnext_tab"), tag: pcTabs.firstIndex(of: .upNext)!)
-        vcsInTab = [podcastsController, filtersViewController, discoverViewController, upNextViewController, profileViewController]
+
+        let dreamingViewController = DreamingProgressViewController()
+        dreamingViewController.tabBarItem = UITabBarItem(title: "Dreaming", image: UIImage(systemName: "chart.bar.fill"), tag: pcTabs.firstIndex(of: .dreaming)!)
+
+        vcsInTab = [podcastsController, filtersViewController, discoverViewController, upNextViewController, dreamingViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
@@ -946,6 +950,8 @@ private extension MainTabBarController {
             event = .profileTabOpened
         case .upNext:
             event = .upNextTabOpened
+        case .dreaming:
+            return
         }
 
         Analytics.track(event, properties: ["initial": isInitial])

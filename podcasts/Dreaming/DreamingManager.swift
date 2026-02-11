@@ -14,6 +14,12 @@ class DreamingManager {
         case failure
     }
 
+    private(set) var cachedDailyGoalSeconds: Int?
+    private(set) var cachedTodayWatchedSeconds: Double?
+    private(set) var cachedExternalTimeSeconds: Double?
+    private(set) var cachedPlatformWatchTimeSeconds: Double?
+    private(set) var cachedTotalInputSeconds: Double?
+
     private init() {}
 
     // MARK: - Token Management
@@ -28,12 +34,23 @@ class DreamingManager {
 
     @discardableResult
     func saveToken(_ token: String) -> Bool {
-        KeychainHelper.save(string: token, key: keychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        let result = KeychainHelper.save(string: token, key: keychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        if result {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Constants.Notifications.dreamingTokenChanged, object: nil)
+            }
+        }
+        return result
     }
 
     @discardableResult
     func removeToken() -> Bool {
-        KeychainHelper.removeKey(keychainKey)
+        let result = KeychainHelper.removeKey(keychainKey)
+        clearProgressCache()
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Constants.Notifications.dreamingTokenChanged, object: nil)
+        }
+        return result
     }
 
     // MARK: - Episode Status Tracking
@@ -179,6 +196,137 @@ class DreamingManager {
             }
         }.resume()
     }
+
+    // MARK: - Progress Data
+
+    func fetchDailyGoal(completion: @escaping (Int?) -> Void) {
+        guard let token = getToken() else {
+            completion(nil)
+            return
+        }
+
+        let timezoneOffset = TimeZone.current.secondsFromGMT() / 3600
+        guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/user?timezone=\(timezoneOffset)") else {
+            FileLog.shared.addMessage("Dreaming: Failed to create daily goal URL")
+            completion(nil)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                FileLog.shared.addMessage("Dreaming: Failed to fetch daily goal - \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let user = json["user"] as? [String: Any],
+                  let dailyGoalSeconds = user["dailyGoalSeconds"] as? Int else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                FileLog.shared.addMessage("Dreaming: Failed to parse daily goal, status: \(statusCode)")
+                completion(nil)
+                return
+            }
+
+            self?.cachedDailyGoalSeconds = dailyGoalSeconds
+
+            // Parse external time summary
+            var externalTime: Double = 0
+            if let externalTimeSummary = user["externalTimeSummary"] as? [String: Any],
+               let es = externalTimeSummary["es"] as? [String: Any],
+               let timeSeconds = es["timeSeconds"] as? Double {
+                externalTime = timeSeconds
+            }
+            self?.cachedExternalTimeSeconds = externalTime
+
+            // Parse platform watch time
+            var platformTime: Double = 0
+            if let cumulativeWatchTimes = user["cumulativeWatchTimes"] as? [String: Any],
+               let es = cumulativeWatchTimes["es"] as? Double {
+                platformTime = es
+            }
+            self?.cachedPlatformWatchTimeSeconds = platformTime
+
+            self?.cachedTotalInputSeconds = externalTime + platformTime
+
+            completion(dailyGoalSeconds)
+        }.resume()
+    }
+
+    func fetchTodayWatchedTime(completion: @escaping (Double?) -> Void) {
+        guard let token = getToken() else {
+            completion(nil)
+            return
+        }
+
+        guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/dayWatchedTime?language=es") else {
+            FileLog.shared.addMessage("Dreaming: Failed to create watched time URL")
+            completion(nil)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayString = dateFormatter.string(from: Date())
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                FileLog.shared.addMessage("Dreaming: Failed to fetch watched time - \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            guard let data = data,
+                  let entries = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                FileLog.shared.addMessage("Dreaming: Failed to parse watched time, status: \(statusCode)")
+                completion(nil)
+                return
+            }
+
+            let todayEntry = entries.first { ($0["date"] as? String) == todayString }
+            let watchedSeconds = (todayEntry?["timeSeconds"] as? Double) ?? 0
+            self?.cachedTodayWatchedSeconds = watchedSeconds
+            completion(watchedSeconds)
+        }.resume()
+    }
+
+    func refreshProgressData(completion: @escaping () -> Void) {
+        let group = DispatchGroup()
+
+        group.enter()
+        fetchDailyGoal { _ in
+            group.leave()
+        }
+
+        group.enter()
+        fetchTodayWatchedTime { _ in
+            group.leave()
+        }
+
+        group.notify(queue: .main) {
+            completion()
+        }
+    }
+
+    func clearProgressCache() {
+        cachedDailyGoalSeconds = nil
+        cachedTodayWatchedSeconds = nil
+        cachedExternalTimeSeconds = nil
+        cachedPlatformWatchTimeSeconds = nil
+        cachedTotalInputSeconds = nil
+    }
+
+    // MARK: - Single Episode Logging
 
     func logEpisodeCompletion(episode: BaseEpisode, podcastTitle: String?) {
         guard let token = getToken() else {
