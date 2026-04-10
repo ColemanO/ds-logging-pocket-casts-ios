@@ -37,6 +37,11 @@ class DreamingProgressViewController: PCViewController {
     private let levelLabel = UILabel()
     private var levelFillWidth: NSLayoutConstraint?
 
+    // All Levels card
+    private let allLevelsCard = UIView()
+    private let allLevelsHeader = UILabel()
+    private let allLevelsStack = UIStackView()
+
     // MARK: - Lifecycle
 
     override func viewDidLoad() {
@@ -85,6 +90,7 @@ class DreamingProgressViewController: PCViewController {
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        scrollView.applyInsetForMiniPlayer()
 
         stackView.axis = .vertical
         stackView.spacing = 16
@@ -101,10 +107,12 @@ class DreamingProgressViewController: PCViewController {
         setupDailyGoalCard()
         setupTotalInputCard()
         setupLevelCard()
+        setupAllLevelsCard()
 
         stackView.addArrangedSubview(dailyGoalCard)
         stackView.addArrangedSubview(totalInputCard)
         stackView.addArrangedSubview(levelCard)
+        stackView.addArrangedSubview(allLevelsCard)
     }
 
     private func setupDailyGoalCard() {
@@ -231,6 +239,31 @@ class DreamingProgressViewController: PCViewController {
         ])
     }
 
+    private func setupAllLevelsCard() {
+        allLevelsCard.layer.cornerRadius = 12
+
+        allLevelsHeader.text = "All Levels"
+        allLevelsHeader.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        allLevelsHeader.translatesAutoresizingMaskIntoConstraints = false
+        allLevelsCard.addSubview(allLevelsHeader)
+
+        allLevelsStack.axis = .vertical
+        allLevelsStack.spacing = 0
+        allLevelsStack.translatesAutoresizingMaskIntoConstraints = false
+        allLevelsCard.addSubview(allLevelsStack)
+
+        NSLayoutConstraint.activate([
+            allLevelsHeader.topAnchor.constraint(equalTo: allLevelsCard.topAnchor, constant: 16),
+            allLevelsHeader.leadingAnchor.constraint(equalTo: allLevelsCard.leadingAnchor, constant: 16),
+            allLevelsHeader.trailingAnchor.constraint(equalTo: allLevelsCard.trailingAnchor, constant: -16),
+
+            allLevelsStack.topAnchor.constraint(equalTo: allLevelsHeader.bottomAnchor, constant: 12),
+            allLevelsStack.leadingAnchor.constraint(equalTo: allLevelsCard.leadingAnchor, constant: 16),
+            allLevelsStack.trailingAnchor.constraint(equalTo: allLevelsCard.trailingAnchor, constant: -16),
+            allLevelsStack.bottomAnchor.constraint(equalTo: allLevelsCard.bottomAnchor, constant: -16)
+        ])
+    }
+
     // MARK: - Theme
 
     private func applyThemeColors() {
@@ -241,12 +274,14 @@ class DreamingProgressViewController: PCViewController {
         dailyGoalCard.backgroundColor = cardBg
         totalInputCard.backgroundColor = cardBg
         levelCard.backgroundColor = cardBg
+        allLevelsCard.backgroundColor = cardBg
 
         let headerColor = ThemeColor.primaryText01()
         dailyGoalHeader.textColor = headerColor
         totalInputHeader.textColor = headerColor
         totalInputValue.textColor = headerColor
         levelHeader.textColor = headerColor
+        allLevelsHeader.textColor = headerColor
 
         let subtitleColor = ThemeColor.primaryText02()
         dailyGoalLabel.textColor = subtitleColor
@@ -292,6 +327,7 @@ class DreamingProgressViewController: PCViewController {
         updateDailyGoalCard()
         updateTotalInputCard()
         updateLevelCard()
+        updateAllLevelsCard()
         updateFillColors()
     }
 
@@ -371,6 +407,85 @@ class DreamingProgressViewController: PCViewController {
             UIView.animate(withDuration: 0.3) {
                 self.levelTrack.layoutIfNeeded()
             }
+        }
+    }
+
+    private func updateAllLevelsCard() {
+        allLevelsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+
+        let totalSeconds = DreamingManager.shared.cachedTotalInputSeconds ?? 0
+        let totalHours = totalSeconds / 3600.0
+        let dailyGoalSeconds = DreamingManager.shared.cachedDailyGoalSeconds ?? 0
+        let dailyGoalHours = Double(dailyGoalSeconds) / 3600.0
+
+        let primaryText = ThemeColor.primaryText01()
+        let subtitleText = ThemeColor.primaryText02()
+        let reachedColor = ThemeColor.support02()
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+
+        for threshold in Self.levelThresholds {
+            let row = UIView()
+
+            let levelLabel = UILabel()
+            levelLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            levelLabel.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(levelLabel)
+
+            let detailStack = UIStackView()
+            detailStack.axis = .vertical
+            detailStack.alignment = .trailing
+            detailStack.spacing = 2
+            detailStack.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(detailStack)
+
+            let detailLabel = UILabel()
+            detailLabel.font = UIFont.systemFont(ofSize: 13)
+            detailLabel.textAlignment = .right
+
+            let dateLabel = UILabel()
+            dateLabel.font = UIFont.systemFont(ofSize: 12)
+            dateLabel.textAlignment = .right
+
+            let reached = totalHours >= threshold.hours
+
+            levelLabel.text = "Level \(threshold.level) — \(Int(threshold.hours))h"
+            levelLabel.textColor = reached ? reachedColor : primaryText
+
+            if reached {
+                detailLabel.text = "Reached"
+                detailLabel.textColor = reachedColor
+                detailStack.addArrangedSubview(detailLabel)
+            } else {
+                let hoursRemaining = threshold.hours - totalHours
+                if dailyGoalHours > 0 {
+                    let days = Int(ceil(hoursRemaining / dailyGoalHours))
+                    detailLabel.text = "\(days) days"
+                    let estimatedDate = Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
+                    dateLabel.text = dateFormatter.string(from: estimatedDate)
+                } else {
+                    detailLabel.text = "\(Int(ceil(hoursRemaining)))h remaining"
+                }
+                detailLabel.textColor = subtitleText
+                dateLabel.textColor = subtitleText
+                detailStack.addArrangedSubview(detailLabel)
+                if dailyGoalHours > 0 {
+                    detailStack.addArrangedSubview(dateLabel)
+                }
+            }
+
+            NSLayoutConstraint.activate([
+                levelLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                levelLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                detailStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                detailStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                detailStack.leadingAnchor.constraint(greaterThanOrEqualTo: levelLabel.trailingAnchor, constant: 8),
+                row.heightAnchor.constraint(equalToConstant: 44)
+            ])
+
+            allLevelsStack.addArrangedSubview(row)
         }
     }
 
