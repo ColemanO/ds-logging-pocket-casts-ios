@@ -23,6 +23,8 @@ struct DreamingProgressChartView: View {
 
     @State private var selectedRange: DateRange = .all
     @State private var scrubPoint: DataPoint?
+    @State private var pinnedPoint: DataPoint?
+    @State private var dragStartTime: Date?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -70,23 +72,25 @@ struct DreamingProgressChartView: View {
                             }
                     }
 
+                    if let pinned = pinnedPoint {
+                        RuleMark(x: .value("Date", pinned.date))
+                            .foregroundStyle(.orange.opacity(0.6))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+
+                        PointMark(
+                            x: .value("Date", pinned.date),
+                            y: .value("Hours", pinned.cumulativeHours)
+                        )
+                        .foregroundStyle(Color.orange)
+                        .symbolSize(40)
+                    }
+
                     if let scrub = scrubPoint {
                         RuleMark(x: .value("Date", scrub.date))
                             .foregroundStyle(.gray.opacity(0.5))
                             .lineStyle(StrokeStyle(lineWidth: 1))
                             .annotation(position: .top, spacing: 4) {
-                                VStack(spacing: 2) {
-                                    Text("\(Int(scrub.cumulativeHours))h")
-                                        .font(.system(size: 11, weight: .semibold))
-                                    Text(scrubDateLabel(scrub.date))
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .background(Color(UIColor.systemBackground).opacity(0.9))
-                                .cornerRadius(4)
-                                .shadow(radius: 1)
+                                scrubAnnotation(scrub: scrub)
                             }
 
                         PointMark(
@@ -126,12 +130,29 @@ struct DreamingProgressChartView: View {
                                     .onChanged { value in
                                         let origin = geometry[proxy.plotAreaFrame].origin
                                         let x = value.location.x - origin.x
-                                        if let date: Date = proxy.value(atX: x) {
-                                            scrubPoint = closestPoint(to: date)
+                                        guard let date: Date = proxy.value(atX: x) else { return }
+                                        let point = closestPoint(to: date)
+
+                                        if dragStartTime == nil {
+                                            dragStartTime = Date()
                                         }
+
+                                        // Pin after holding ~2s in roughly the same spot
+                                        if pinnedPoint == nil,
+                                           let start = dragStartTime,
+                                           Date().timeIntervalSince(start) > 2.0,
+                                           let scrub = scrubPoint, let pt = point,
+                                           abs(scrub.date.timeIntervalSince(pt.date)) < 86400 {
+                                            pinnedPoint = scrub
+                                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                        }
+
+                                        scrubPoint = point
                                     }
                                     .onEnded { _ in
                                         scrubPoint = nil
+                                        pinnedPoint = nil
+                                        dragStartTime = nil
                                     }
                             )
                     }
@@ -243,6 +264,40 @@ struct DreamingProgressChartView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: date)
+    }
+
+    @ViewBuilder
+    private func scrubAnnotation(scrub: DataPoint) -> some View {
+        if let pinned = pinnedPoint {
+            let delta = scrub.cumulativeHours - pinned.cumulativeHours
+            let days = Calendar.current.dateComponents([.day], from: pinned.date, to: scrub.date).day ?? 0
+            VStack(spacing: 2) {
+                Text("\(delta >= 0 ? "+" : "")\(Int(delta))h")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(delta >= 0 ? .green : .red)
+                Text("\(abs(days))d")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color(UIColor.systemBackground).opacity(0.9))
+            .cornerRadius(4)
+            .shadow(radius: 1)
+        } else {
+            VStack(spacing: 2) {
+                Text("\(Int(scrub.cumulativeHours))h")
+                    .font(.system(size: 11, weight: .semibold))
+                Text(scrubDateLabel(scrub.date))
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color(UIColor.systemBackground).opacity(0.9))
+            .cornerRadius(4)
+            .shadow(radius: 1)
+        }
     }
 
     // MARK: - Filtering
