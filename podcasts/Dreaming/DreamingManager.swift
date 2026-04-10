@@ -14,11 +14,33 @@ class DreamingManager {
         case failure
     }
 
+    struct ExternalTimeEntry {
+        let id: String
+        let type: String
+        let date: String
+        let timeSeconds: Double
+        let description: String
+    }
+
+    struct DayWatchedTimeEntry {
+        let date: String
+        let timeSeconds: Double
+        let goalReached: Bool
+    }
+
     private(set) var cachedDailyGoalSeconds: Int?
-    private(set) var cachedTodayWatchedSeconds: Double?
+    var cachedTodayWatchedSeconds: Double? {
+        guard let times = cachedDayWatchedTimes else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+        return times.first { $0.date == today }?.timeSeconds
+    }
     private(set) var cachedExternalTimeSeconds: Double?
     private(set) var cachedPlatformWatchTimeSeconds: Double?
     private(set) var cachedTotalInputSeconds: Double?
+    private(set) var cachedExternalTimes: [ExternalTimeEntry]?
+    private(set) var cachedDayWatchedTimes: [DayWatchedTimeEntry]?
 
     private init() {}
 
@@ -293,10 +315,66 @@ class DreamingManager {
                 return
             }
 
+            self?.cachedDayWatchedTimes = entries.compactMap { dict -> DayWatchedTimeEntry? in
+                guard let date = dict["date"] as? String,
+                      let timeSeconds = dict["timeSeconds"] as? Double else {
+                    return nil
+                }
+                let goalReached = dict["goalReached"] as? Bool ?? false
+                return DayWatchedTimeEntry(date: date, timeSeconds: timeSeconds, goalReached: goalReached)
+            }
+
             let todayEntry = entries.first { ($0["date"] as? String) == todayString }
             let watchedSeconds = (todayEntry?["timeSeconds"] as? Double) ?? 0
-            self?.cachedTodayWatchedSeconds = watchedSeconds
             completion(watchedSeconds)
+        }.resume()
+    }
+
+    func fetchExternalTimes(completion: @escaping ([ExternalTimeEntry]?) -> Void) {
+        guard let token = getToken() else {
+            completion(nil)
+            return
+        }
+
+        guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/externalTime?language=es") else {
+            FileLog.shared.addMessage("Dreaming: Failed to create external times URL")
+            completion(nil)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                FileLog.shared.addMessage("Dreaming: Failed to fetch external times - \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let externalTimes = json["externalTimes"] as? [[String: Any]] else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                FileLog.shared.addMessage("Dreaming: Failed to parse external times, status: \(statusCode)")
+                completion(nil)
+                return
+            }
+
+            let entries = externalTimes.compactMap { dict -> ExternalTimeEntry? in
+                guard let id = dict["id"] as? String,
+                      let type = dict["type"] as? String,
+                      let date = dict["date"] as? String,
+                      let timeSeconds = dict["timeSeconds"] as? Double,
+                      let description = dict["description"] as? String else {
+                    return nil
+                }
+                return ExternalTimeEntry(id: id, type: type, date: date, timeSeconds: timeSeconds, description: description)
+            }
+
+            self?.cachedExternalTimes = entries
+            completion(entries)
         }.resume()
     }
 
@@ -313,6 +391,11 @@ class DreamingManager {
             group.leave()
         }
 
+        group.enter()
+        fetchExternalTimes { _ in
+            group.leave()
+        }
+
         group.notify(queue: .main) {
             completion()
         }
@@ -320,10 +403,11 @@ class DreamingManager {
 
     func clearProgressCache() {
         cachedDailyGoalSeconds = nil
-        cachedTodayWatchedSeconds = nil
         cachedExternalTimeSeconds = nil
         cachedPlatformWatchTimeSeconds = nil
         cachedTotalInputSeconds = nil
+        cachedExternalTimes = nil
+        cachedDayWatchedTimes = nil
     }
 
     // MARK: - Single Episode Logging
