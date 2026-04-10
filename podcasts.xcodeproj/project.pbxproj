@@ -65,6 +65,7 @@
 		10DFE9362C5A8D1300957D0A /* ABTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DFE9322C5A8D1300957D0A /* ABTest.swift */; };
 		10DFE9372C5A8D1300957D0A /* ABTestProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DFE9332C5A8D1300957D0A /* ABTestProvider.swift */; };
 		10DFE9382C5A8D1300957D0A /* ABTestProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DFE9342C5A8D1300957D0A /* ABTestProviding.swift */; };
+		1B0B5ADC2F88928600DB2B42 /* DreamingProgressChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */; };
 		1B2A05852F35BB0300887710 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
 		2F63CE9528809E5B00A34B51 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F63CE9428809E5A00A34B51 /* ThemeTests.swift */; };
 		2F90990E2A4F88B10044FC55 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F90990D2A4F88B10044FC55 /* ShareViewController.swift */; };
@@ -2268,6 +2269,7 @@
 		10DFE9332C5A8D1300957D0A /* ABTestProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ABTestProvider.swift; sourceTree = "<group>"; };
 		10DFE9342C5A8D1300957D0A /* ABTestProviding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ABTestProviding.swift; sourceTree = "<group>"; };
 		14DD11DB5830A48ACE6928B2 /* VoiceBoostN.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = VoiceBoostN.c; sourceTree = "<group>"; };
+		1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingProgressChartView.swift; sourceTree = "<group>"; };
 		1BAF00E42F35C7000057B32B /* Pocket Casts App ClipPrototype.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Pocket Casts App ClipPrototype.entitlements"; sourceTree = "<group>"; };
 		1D2A1F95464D843A3E431F2C /* VoiceBoostN.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN.h; sourceTree = "<group>"; };
 		232C32192FA9FA97E332A6E4 /* VoiceBoostN_Internal.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN_Internal.h; sourceTree = "<group>"; };
@@ -5720,6 +5722,7 @@
 		AA0000000000000000000005 /* Dreaming */ = {
 			isa = PBXGroup;
 			children = (
+				1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */,
 				AA0000000000000000000001 /* DreamingManager.swift */,
 				AA0000000000000000000008 /* DreamingProgressViewController.swift */,
 				AA0000000000000000000002 /* DreamingSettingsViewController.swift */,
@@ -11064,6 +11067,7 @@
 				4036B0A425240F5D00AE08E6 /* WidgetHelper.swift in Sources */,
 				BD92323823629FAA00C1E118 /* ShowNotesPlayerItemViewController.swift in Sources */,
 				C7A654052992971100BB84C1 /* CPInterfaceController+Helpers.swift in Sources */,
+				1B0B5ADC2F88928600DB2B42 /* DreamingProgressChartView.swift in Sources */,
 				40A0A90B24B3FD7800C29362 /* DownloadsViewController+MultiSelect.swift in Sources */,
 				BD35BB6C1CF697650018D63E /* AudioUtils.swift in Sources */,
 				C7B3C60A2919DCB700054145 /* ScrollViewIfNeeded.swift in Sources */,

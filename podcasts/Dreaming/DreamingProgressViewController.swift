@@ -1,3 +1,4 @@
+import SwiftUI
 import UIKit
 
 class DreamingProgressViewController: PCViewController {
@@ -36,6 +37,10 @@ class DreamingProgressViewController: PCViewController {
     private let levelFill = UIView()
     private let levelLabel = UILabel()
     private var levelFillWidth: NSLayoutConstraint?
+
+    // Progress Chart card
+    private let chartCard = UIView()
+    private var chartHostingController: UIViewController?
 
     // All Levels card
     private let allLevelsCard = UIView()
@@ -107,11 +112,13 @@ class DreamingProgressViewController: PCViewController {
         setupDailyGoalCard()
         setupTotalInputCard()
         setupLevelCard()
+        setupChartCard()
         setupAllLevelsCard()
 
         stackView.addArrangedSubview(dailyGoalCard)
         stackView.addArrangedSubview(totalInputCard)
         stackView.addArrangedSubview(levelCard)
+        stackView.addArrangedSubview(chartCard)
         stackView.addArrangedSubview(allLevelsCard)
     }
 
@@ -239,6 +246,10 @@ class DreamingProgressViewController: PCViewController {
         ])
     }
 
+    private func setupChartCard() {
+        chartCard.layer.cornerRadius = 12
+    }
+
     private func setupAllLevelsCard() {
         allLevelsCard.layer.cornerRadius = 12
 
@@ -274,6 +285,7 @@ class DreamingProgressViewController: PCViewController {
         dailyGoalCard.backgroundColor = cardBg
         totalInputCard.backgroundColor = cardBg
         levelCard.backgroundColor = cardBg
+        chartCard.backgroundColor = cardBg
         allLevelsCard.backgroundColor = cardBg
 
         let headerColor = ThemeColor.primaryText01()
@@ -327,6 +339,7 @@ class DreamingProgressViewController: PCViewController {
         updateDailyGoalCard()
         updateTotalInputCard()
         updateLevelCard()
+        updateChartCard()
         updateAllLevelsCard()
         updateFillColors()
     }
@@ -408,6 +421,66 @@ class DreamingProgressViewController: PCViewController {
                 self.levelTrack.layoutIfNeeded()
             }
         }
+    }
+
+    private func updateChartCard() {
+        guard #available(iOS 16.0, *) else { return }
+
+        let dataPoints = buildChartDataPoints()
+        let chartView = DreamingProgressChartView(
+            dataPoints: dataPoints,
+            levelThresholds: Self.levelThresholds
+        )
+
+        // Remove previous hosting controller
+        if let existing = chartHostingController {
+            existing.willMove(toParent: nil)
+            existing.view.removeFromSuperview()
+            existing.removeFromParent()
+        }
+
+        let hostingController = UIHostingController(rootView: chartView)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        chartCard.addSubview(hostingController.view)
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: chartCard.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: chartCard.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: chartCard.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: chartCard.bottomAnchor)
+        ])
+        hostingController.didMove(toParent: self)
+        chartHostingController = hostingController
+    }
+
+    private func buildChartDataPoints() -> [DreamingProgressChartView.DataPoint] {
+        guard #available(iOS 16.0, *) else { return [] }
+        guard let dayTimes = DreamingManager.shared.cachedDayWatchedTimes, !dayTimes.isEmpty else { return [] }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        // Add initial external time (input prior to Dreaming Spanish) to the baseline
+        var initialSeconds = 0.0
+        if let externalTimes = DreamingManager.shared.cachedExternalTimes {
+            initialSeconds = externalTimes
+                .filter { $0.type == "initial" }
+                .reduce(0.0) { $0 + $1.timeSeconds }
+        }
+
+        let sorted = dayTimes.sorted { $0.date < $1.date }
+        var cumulative = initialSeconds / 3600.0
+        var points: [DreamingProgressChartView.DataPoint] = []
+
+        for entry in sorted {
+            guard let date = formatter.date(from: entry.date) else { continue }
+            cumulative += entry.timeSeconds / 3600.0
+            points.append(.init(date: date, cumulativeHours: cumulative))
+        }
+
+        return points
     }
 
     private func updateAllLevelsCard() {
