@@ -22,6 +22,7 @@ struct DreamingProgressChartView: View {
     }
 
     @State private var selectedRange: DateRange = .all
+    @State private var scrubPoint: DataPoint?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -68,6 +69,33 @@ struct DreamingProgressChartView: View {
                                     .foregroundColor(.secondary)
                             }
                     }
+
+                    if let scrub = scrubPoint {
+                        RuleMark(x: .value("Date", scrub.date))
+                            .foregroundStyle(.gray.opacity(0.5))
+                            .lineStyle(StrokeStyle(lineWidth: 1))
+                            .annotation(position: .top, spacing: 4) {
+                                VStack(spacing: 2) {
+                                    Text("\(Int(scrub.cumulativeHours))h")
+                                        .font(.system(size: 11, weight: .semibold))
+                                    Text(scrubDateLabel(scrub.date))
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Color(UIColor.systemBackground).opacity(0.9))
+                                .cornerRadius(4)
+                                .shadow(radius: 1)
+                            }
+
+                        PointMark(
+                            x: .value("Date", scrub.date),
+                            y: .value("Hours", scrub.cumulativeHours)
+                        )
+                        .foregroundStyle(Color.blue)
+                        .symbolSize(40)
+                    }
                 }
                 .frame(height: 200)
                 .chartYAxis {
@@ -86,6 +114,26 @@ struct DreamingProgressChartView: View {
                         AxisValueLabel(format: .dateTime.month(.abbreviated).day())
                             .font(.system(size: 10))
                         AxisGridLine()
+                    }
+                }
+                .chartOverlay { proxy in
+                    GeometryReader { geometry in
+                        Rectangle()
+                            .fill(Color.clear)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        let origin = geometry[proxy.plotAreaFrame].origin
+                                        let x = value.location.x - origin.x
+                                        if let date: Date = proxy.value(atX: x) {
+                                            scrubPoint = closestPoint(to: date)
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        scrubPoint = nil
+                                    }
+                            )
                     }
                 }
             }
@@ -180,6 +228,20 @@ struct DreamingProgressChartView: View {
     private func monthLabel(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+
+    // MARK: - Scrubbing
+
+    private func closestPoint(to date: Date) -> DataPoint? {
+        let points = filteredPoints
+        guard !points.isEmpty else { return nil }
+        return points.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }
+    }
+
+    private func scrubDateLabel(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: date)
     }
 
