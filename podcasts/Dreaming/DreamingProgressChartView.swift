@@ -13,10 +13,12 @@ struct DreamingProgressChartView: View {
     }
 
     enum DateRange: Hashable {
-        case month(Date) // first day of the month
+        case month(Date) // specific month picker
+        case past1W
+        case mtd
+        case past1M
         case ytd
         case past1Y
-        case past2Y
         case past5Y
         case all
     }
@@ -164,63 +166,65 @@ struct DreamingProgressChartView: View {
 
     // MARK: - Date Range Bar
 
+    private static let presetRanges: [(label: String, range: DateRange)] = [
+        ("1W", .past1W),
+        ("MTD", .mtd),
+        ("1M", .past1M),
+        ("YTD", .ytd),
+        ("1Y", .past1Y),
+        ("All", .all),
+    ]
+
     private var dateRangeBar: some View {
-        HStack(spacing: 6) {
-            rangeButton("YTD", isSelected: selectedRange == .ytd) {
-                selectedRange = .ytd
-            }
-            rangeButton("1Y", isSelected: selectedRange == .past1Y) {
-                selectedRange = .past1Y
-            }
-            rangeButton("2Y", isSelected: selectedRange == .past2Y) {
-                selectedRange = .past2Y
-            }
-            rangeButton("5Y", isSelected: selectedRange == .past5Y) {
-                selectedRange = .past5Y
-            }
-            rangeButton("All", isSelected: selectedRange == .all) {
-                selectedRange = .all
+        HStack(spacing: 8) {
+            dropdownMenu(label: rangeMenuLabel, isActive: !isMonthSelected) {
+                ForEach(Self.presetRanges, id: \.label) { preset in
+                    Button(preset.label) {
+                        selectedRange = preset.range
+                    }
+                }
             }
 
-            Spacer()
-
-            Menu {
+            dropdownMenu(label: monthMenuLabel, isActive: isMonthSelected) {
                 ForEach(availableMonths, id: \.self) { date in
                     Button(monthLabel(date)) {
                         selectedRange = .month(date)
                     }
                 }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(monthMenuLabel)
-                        .font(.system(size: 12, weight: isMonthSelected ? .semibold : .regular))
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .medium))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(isMonthSelected ? Color.blue.opacity(0.15) : Color.clear)
-                .foregroundColor(isMonthSelected ? .blue : .secondary)
-                .cornerRadius(8)
             }
+
+            Spacer()
         }
     }
 
-    private func rangeButton(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(isSelected ? Color.blue.opacity(0.15) : Color.clear)
-                .foregroundColor(isSelected ? .blue : .secondary)
-                .cornerRadius(8)
+    private func dropdownMenu<Content: View>(label: String, isActive: Bool, @ViewBuilder content: () -> Content) -> some View {
+        Menu {
+            content()
+        } label: {
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.system(size: 12, weight: isActive ? .semibold : .regular))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(isActive ? Color.blue.opacity(0.15) : Color.clear)
+            .foregroundColor(isActive ? .blue : .secondary)
+            .cornerRadius(8)
         }
     }
 
     private var isMonthSelected: Bool {
         if case .month = selectedRange { return true }
         return false
+    }
+
+    private var rangeMenuLabel: String {
+        for preset in Self.presetRanges where preset.range == selectedRange {
+            return preset.label
+        }
+        return "Range"
     }
 
     private var monthMenuLabel: String {
@@ -309,13 +313,18 @@ struct DreamingProgressChartView: View {
         switch selectedRange {
         case .all:
             return nil
+        case .past1W:
+            return (cal.date(byAdding: .day, value: -7, to: now)!, now)
+        case .mtd:
+            let start = cal.date(from: cal.dateComponents([.year, .month], from: now))!
+            return (start, now)
+        case .past1M:
+            return (cal.date(byAdding: .month, value: -1, to: now)!, now)
         case .ytd:
             let start = cal.date(from: cal.dateComponents([.year], from: now))!
             return (start, now)
         case .past1Y:
             return (cal.date(byAdding: .year, value: -1, to: now)!, now)
-        case .past2Y:
-            return (cal.date(byAdding: .year, value: -2, to: now)!, now)
         case .past5Y:
             return (cal.date(byAdding: .year, value: -5, to: now)!, now)
         case .month(let monthStart):
