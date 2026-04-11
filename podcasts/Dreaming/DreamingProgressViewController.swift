@@ -24,14 +24,10 @@ class DreamingProgressViewController: PCViewController {
     private let dailyGoalLabel = UILabel()
     private var dailyGoalFillWidth: NSLayoutConstraint?
 
-    // Total Input card
-    private let totalInputCard = UIView()
-    private let totalInputHeader = UILabel()
+    // Total Input + Level card
+    private let totalLevelCard = UIView()
     private let totalInputValue = UILabel()
     private let totalInputSubtitle = UILabel()
-
-    // Level Progress card
-    private let levelCard = UIView()
     private let levelHeader = UILabel()
     private let levelTrack = UIView()
     private let levelFill = UIView()
@@ -41,6 +37,14 @@ class DreamingProgressViewController: PCViewController {
     // Progress Chart card
     private let chartCard = UIView()
     private var chartHostingController: UIViewController?
+
+    // Input Breakdown card
+    private let breakdownCard = UIView()
+    private var breakdownHostingController: UIViewController?
+
+    // Podcast Breakdown card
+    private let podcastBreakdownCard = UIView()
+    private var podcastBreakdownHostingController: UIViewController?
 
     // Predictions card
     private let predictionsCard = UIView()
@@ -117,16 +121,18 @@ class DreamingProgressViewController: PCViewController {
         ])
 
         setupDailyGoalCard()
-        setupTotalInputCard()
-        setupLevelCard()
+        setupTotalLevelCard()
         setupChartCard()
+        setupBreakdownCard()
+        setupPodcastBreakdownCard()
         setupPredictionsCard()
         setupAllLevelsCard()
 
         stackView.addArrangedSubview(dailyGoalCard)
-        stackView.addArrangedSubview(totalInputCard)
-        stackView.addArrangedSubview(levelCard)
+        stackView.addArrangedSubview(totalLevelCard)
         stackView.addArrangedSubview(chartCard)
+        stackView.addArrangedSubview(breakdownCard)
+        stackView.addArrangedSubview(podcastBreakdownCard)
         stackView.addArrangedSubview(predictionsCard)
         stackView.addArrangedSubview(allLevelsCard)
     }
@@ -177,50 +183,26 @@ class DreamingProgressViewController: PCViewController {
         ])
     }
 
-    private func setupTotalInputCard() {
-        totalInputCard.layer.cornerRadius = 12
-
-        totalInputHeader.text = "Total Input"
-        totalInputHeader.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
-        totalInputHeader.translatesAutoresizingMaskIntoConstraints = false
-        totalInputCard.addSubview(totalInputHeader)
+    private func setupTotalLevelCard() {
+        totalLevelCard.layer.cornerRadius = 12
 
         totalInputValue.font = UIFont.systemFont(ofSize: 34, weight: .bold)
         totalInputValue.translatesAutoresizingMaskIntoConstraints = false
-        totalInputCard.addSubview(totalInputValue)
+        totalLevelCard.addSubview(totalInputValue)
 
         totalInputSubtitle.font = UIFont.systemFont(ofSize: 13)
         totalInputSubtitle.numberOfLines = 0
         totalInputSubtitle.translatesAutoresizingMaskIntoConstraints = false
-        totalInputCard.addSubview(totalInputSubtitle)
-
-        NSLayoutConstraint.activate([
-            totalInputHeader.topAnchor.constraint(equalTo: totalInputCard.topAnchor, constant: 16),
-            totalInputHeader.leadingAnchor.constraint(equalTo: totalInputCard.leadingAnchor, constant: 16),
-            totalInputHeader.trailingAnchor.constraint(equalTo: totalInputCard.trailingAnchor, constant: -16),
-
-            totalInputValue.topAnchor.constraint(equalTo: totalInputHeader.bottomAnchor, constant: 8),
-            totalInputValue.leadingAnchor.constraint(equalTo: totalInputCard.leadingAnchor, constant: 16),
-            totalInputValue.trailingAnchor.constraint(equalTo: totalInputCard.trailingAnchor, constant: -16),
-
-            totalInputSubtitle.topAnchor.constraint(equalTo: totalInputValue.bottomAnchor, constant: 4),
-            totalInputSubtitle.leadingAnchor.constraint(equalTo: totalInputCard.leadingAnchor, constant: 16),
-            totalInputSubtitle.trailingAnchor.constraint(equalTo: totalInputCard.trailingAnchor, constant: -16),
-            totalInputSubtitle.bottomAnchor.constraint(equalTo: totalInputCard.bottomAnchor, constant: -16)
-        ])
-    }
-
-    private func setupLevelCard() {
-        levelCard.layer.cornerRadius = 12
+        totalLevelCard.addSubview(totalInputSubtitle)
 
         levelHeader.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
         levelHeader.translatesAutoresizingMaskIntoConstraints = false
-        levelCard.addSubview(levelHeader)
+        totalLevelCard.addSubview(levelHeader)
 
         levelTrack.layer.cornerRadius = 6
         levelTrack.clipsToBounds = true
         levelTrack.translatesAutoresizingMaskIntoConstraints = false
-        levelCard.addSubview(levelTrack)
+        totalLevelCard.addSubview(levelTrack)
 
         levelFill.layer.cornerRadius = 6
         levelFill.translatesAutoresizingMaskIntoConstraints = false
@@ -231,16 +213,24 @@ class DreamingProgressViewController: PCViewController {
 
         levelLabel.font = UIFont.systemFont(ofSize: 13)
         levelLabel.translatesAutoresizingMaskIntoConstraints = false
-        levelCard.addSubview(levelLabel)
+        totalLevelCard.addSubview(levelLabel)
 
         NSLayoutConstraint.activate([
-            levelHeader.topAnchor.constraint(equalTo: levelCard.topAnchor, constant: 16),
-            levelHeader.leadingAnchor.constraint(equalTo: levelCard.leadingAnchor, constant: 16),
-            levelHeader.trailingAnchor.constraint(equalTo: levelCard.trailingAnchor, constant: -16),
+            totalInputValue.topAnchor.constraint(equalTo: totalLevelCard.topAnchor, constant: 16),
+            totalInputValue.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
+            totalInputValue.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
+
+            totalInputSubtitle.topAnchor.constraint(equalTo: totalInputValue.bottomAnchor, constant: 4),
+            totalInputSubtitle.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
+            totalInputSubtitle.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
+
+            levelHeader.topAnchor.constraint(equalTo: totalInputSubtitle.bottomAnchor, constant: 16),
+            levelHeader.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
+            levelHeader.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
 
             levelTrack.topAnchor.constraint(equalTo: levelHeader.bottomAnchor, constant: 12),
-            levelTrack.leadingAnchor.constraint(equalTo: levelCard.leadingAnchor, constant: 16),
-            levelTrack.trailingAnchor.constraint(equalTo: levelCard.trailingAnchor, constant: -16),
+            levelTrack.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
+            levelTrack.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
             levelTrack.heightAnchor.constraint(equalToConstant: 12),
 
             levelFill.leadingAnchor.constraint(equalTo: levelTrack.leadingAnchor),
@@ -249,14 +239,18 @@ class DreamingProgressViewController: PCViewController {
             fillWidth,
 
             levelLabel.topAnchor.constraint(equalTo: levelTrack.bottomAnchor, constant: 8),
-            levelLabel.leadingAnchor.constraint(equalTo: levelCard.leadingAnchor, constant: 16),
-            levelLabel.trailingAnchor.constraint(equalTo: levelCard.trailingAnchor, constant: -16),
-            levelLabel.bottomAnchor.constraint(equalTo: levelCard.bottomAnchor, constant: -16)
+            levelLabel.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
+            levelLabel.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
+            levelLabel.bottomAnchor.constraint(equalTo: totalLevelCard.bottomAnchor, constant: -16)
         ])
     }
 
     private func setupChartCard() {
         chartCard.layer.cornerRadius = 12
+    }
+
+    private func setupBreakdownCard() {
+        breakdownCard.layer.cornerRadius = 12
     }
 
     private func setupPredictionsCard() {
@@ -332,15 +326,15 @@ class DreamingProgressViewController: PCViewController {
 
         let cardBg = ThemeColor.primaryUi02()
         dailyGoalCard.backgroundColor = cardBg
-        totalInputCard.backgroundColor = cardBg
-        levelCard.backgroundColor = cardBg
+        totalLevelCard.backgroundColor = cardBg
         chartCard.backgroundColor = cardBg
+        breakdownCard.backgroundColor = cardBg
+        podcastBreakdownCard.backgroundColor = cardBg
         predictionsCard.backgroundColor = cardBg
         allLevelsCard.backgroundColor = cardBg
 
         let headerColor = ThemeColor.primaryText01()
         dailyGoalHeader.textColor = headerColor
-        totalInputHeader.textColor = headerColor
         totalInputValue.textColor = headerColor
         levelHeader.textColor = headerColor
         predictionsHeader.textColor = headerColor
@@ -388,9 +382,10 @@ class DreamingProgressViewController: PCViewController {
 
     private func updateCards() {
         updateDailyGoalCard()
-        updateTotalInputCard()
-        updateLevelCard()
+        updateTotalLevelCard()
         updateChartCard()
+        updateBreakdownCard()
+        updatePodcastBreakdownCard()
         updatePredictionsCard()
         updateAllLevelsCard()
         updateFillColors()
@@ -414,23 +409,10 @@ class DreamingProgressViewController: PCViewController {
         }
     }
 
-    private func updateTotalInputCard() {
+    private func updateTotalLevelCard() {
         guard let totalSeconds = DreamingManager.shared.cachedTotalInputSeconds else {
             totalInputValue.text = "--"
             totalInputSubtitle.text = ""
-            return
-        }
-
-        let totalHours = Int(totalSeconds / 3600)
-        totalInputValue.text = "\(totalHours) hours"
-
-        let platformHours = Int((DreamingManager.shared.cachedPlatformWatchTimeSeconds ?? 0) / 3600)
-        let externalHours = Int((DreamingManager.shared.cachedExternalTimeSeconds ?? 0) / 3600)
-        totalInputSubtitle.text = "\(platformHours)h from Dreaming Spanish \u{00B7} \(externalHours)h external"
-    }
-
-    private func updateLevelCard() {
-        guard let totalSeconds = DreamingManager.shared.cachedTotalInputSeconds else {
             levelHeader.text = "Level --"
             levelLabel.text = "--"
             levelFillWidth?.constant = 0
@@ -438,9 +420,17 @@ class DreamingProgressViewController: PCViewController {
         }
 
         let totalHours = totalSeconds / 3600.0
+
+        // Total input
+        totalInputValue.text = "\(Int(totalHours)) hours"
+
+        let platformHours = Int((DreamingManager.shared.cachedPlatformWatchTimeSeconds ?? 0) / 3600)
+        let externalHours = Int((DreamingManager.shared.cachedExternalTimeSeconds ?? 0) / 3600)
+        totalInputSubtitle.text = "\(platformHours)h from Dreaming Spanish \u{00B7} \(externalHours)h external"
+
+        // Level progress
         let thresholds = Self.levelThresholds
 
-        // Find current level
         var currentLevel = thresholds[0]
         var nextLevel: (level: Int, hours: Double)?
         for i in 0 ..< thresholds.count {
@@ -533,6 +523,168 @@ class DreamingProgressViewController: PCViewController {
         }
 
         return points
+    }
+
+    private func updateBreakdownCard() {
+        guard #available(iOS 17.0, *) else {
+            breakdownCard.isHidden = true
+            return
+        }
+
+        let slices = buildBreakdownSlices()
+        let breakdownView = DreamingInputBreakdownView(title: "Input Breakdown", slices: slices)
+
+        if let existing = breakdownHostingController {
+            existing.willMove(toParent: nil)
+            existing.view.removeFromSuperview()
+            existing.removeFromParent()
+        }
+
+        let hostingController = UIHostingController(rootView: breakdownView)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        breakdownCard.addSubview(hostingController.view)
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: breakdownCard.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: breakdownCard.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: breakdownCard.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: breakdownCard.bottomAnchor)
+        ])
+        hostingController.didMove(toParent: self)
+        breakdownHostingController = hostingController
+    }
+
+    @available(iOS 17.0, *)
+    private func buildBreakdownSlices() -> [DreamingInputBreakdownView.Slice] {
+
+        let platformHours = (DreamingManager.shared.cachedPlatformWatchTimeSeconds ?? 0) / 3600.0
+
+        var initialHours = 0.0
+        var podcastHours = 0.0
+        var externalVideoHours = 0.0
+        var talkingHours = 0.0
+
+        if let externalTimes = DreamingManager.shared.cachedExternalTimes {
+            for entry in externalTimes {
+                let hours = entry.timeSeconds / 3600.0
+                switch entry.type {
+                case "initial":
+                    initialHours += hours
+                case "listening":
+                    podcastHours += hours
+                case "watching":
+                    externalVideoHours += hours
+                case "talking":
+                    talkingHours += hours
+                default:
+                    break
+                }
+            }
+        }
+
+        return [
+            .init(label: "Dreaming Spanish", hours: platformHours, color: .blue),
+            .init(label: "Initial", hours: initialHours, color: .gray),
+            .init(label: "Podcasts", hours: podcastHours, color: .green),
+            .init(label: "External Videos", hours: externalVideoHours, color: .orange),
+            .init(label: "Talking", hours: talkingHours, color: .purple),
+        ]
+    }
+
+    private func setupPodcastBreakdownCard() {
+        podcastBreakdownCard.layer.cornerRadius = 12
+    }
+
+    private func updatePodcastBreakdownCard() {
+        guard #available(iOS 17.0, *) else {
+            podcastBreakdownCard.isHidden = true
+            return
+        }
+
+        let slices = buildPodcastBreakdownSlices()
+        if slices.isEmpty || slices.allSatisfy({ $0.hours <= 0 }) {
+            podcastBreakdownCard.isHidden = true
+            return
+        }
+        podcastBreakdownCard.isHidden = false
+
+        let breakdownView = DreamingInputBreakdownView(title: "Podcast Breakdown", slices: slices)
+
+        if let existing = podcastBreakdownHostingController {
+            existing.willMove(toParent: nil)
+            existing.view.removeFromSuperview()
+            existing.removeFromParent()
+        }
+
+        let hostingController = UIHostingController(rootView: breakdownView)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        podcastBreakdownCard.addSubview(hostingController.view)
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: podcastBreakdownCard.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: podcastBreakdownCard.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: podcastBreakdownCard.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: podcastBreakdownCard.bottomAnchor)
+        ])
+        hostingController.didMove(toParent: self)
+        podcastBreakdownHostingController = hostingController
+    }
+
+    private static let podcastColors: [Color] = [
+        .blue, .green, .orange, .purple, .pink, .red, .teal, .indigo, .mint, .cyan, .brown, .yellow
+    ]
+
+    @available(iOS 17.0, *)
+    private func buildPodcastBreakdownSlices() -> [DreamingInputBreakdownView.Slice] {
+        guard let externalTimes = DreamingManager.shared.cachedExternalTimes else { return [] }
+
+        let listeningEntries = externalTimes.filter { $0.type == "listening" }
+        guard !listeningEntries.isEmpty else { return [] }
+
+        // Group by podcast name, stripping " - Ep X" suffix
+        let episodePattern = try! NSRegularExpression(pattern: #"\s*-\s*[Ee]ps?\s*[\d:,\s\-]+$"#)
+        var hoursByPodcast: [String: Double] = [:]
+        var displayNames: [String: String] = [:]
+
+        for entry in listeningEntries {
+            let desc = entry.description
+            let range = NSRange(desc.startIndex..., in: desc)
+            let podcastName = episodePattern.stringByReplacingMatches(in: desc, range: range, withTemplate: "")
+                .trimmingCharacters(in: .whitespaces)
+            let key = podcastName.lowercased()
+            if hoursByPodcast[key] == nil {
+                displayNames[key] = podcastName
+            }
+            hoursByPodcast[key, default: 0] += entry.timeSeconds / 3600.0
+        }
+
+        let totalHours = hoursByPodcast.values.reduce(0, +)
+        let threshold = totalHours * 0.01
+        var otherHours = 0.0
+        var mainEntries: [(key: String, value: Double)] = []
+
+        for pair in hoursByPodcast.sorted(by: { $0.value > $1.value }) {
+            if pair.value < threshold {
+                otherHours += pair.value
+            } else {
+                mainEntries.append(pair)
+            }
+        }
+
+        let colors = Self.podcastColors
+        var slices = mainEntries.enumerated().map { index, pair in
+            DreamingInputBreakdownView.Slice(label: displayNames[pair.key] ?? pair.key, hours: pair.value, color: colors[index % colors.count])
+        }
+
+        if otherHours > 0 {
+            slices.append(.init(label: "Other", hours: otherHours, color: .gray))
+        }
+
+        return slices
     }
 
     private func updatePredictionsCard() {
