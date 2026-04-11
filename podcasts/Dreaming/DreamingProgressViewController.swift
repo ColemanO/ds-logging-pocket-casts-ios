@@ -42,6 +42,13 @@ class DreamingProgressViewController: PCViewController {
     private let chartCard = UIView()
     private var chartHostingController: UIViewController?
 
+    // Predictions card
+    private let predictionsCard = UIView()
+    private let predictionsHeader = UILabel()
+    private let predictionsVelocityLabel = UILabel()
+    private let predictionsTrendLabel = UILabel()
+    private let predictionsStack = UIStackView()
+
     // All Levels card
     private let allLevelsCard = UIView()
     private let allLevelsHeader = UILabel()
@@ -113,12 +120,14 @@ class DreamingProgressViewController: PCViewController {
         setupTotalInputCard()
         setupLevelCard()
         setupChartCard()
+        setupPredictionsCard()
         setupAllLevelsCard()
 
         stackView.addArrangedSubview(dailyGoalCard)
         stackView.addArrangedSubview(totalInputCard)
         stackView.addArrangedSubview(levelCard)
         stackView.addArrangedSubview(chartCard)
+        stackView.addArrangedSubview(predictionsCard)
         stackView.addArrangedSubview(allLevelsCard)
     }
 
@@ -250,6 +259,46 @@ class DreamingProgressViewController: PCViewController {
         chartCard.layer.cornerRadius = 12
     }
 
+    private func setupPredictionsCard() {
+        predictionsCard.layer.cornerRadius = 12
+
+        predictionsHeader.text = "Predictions"
+        predictionsHeader.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        predictionsHeader.translatesAutoresizingMaskIntoConstraints = false
+        predictionsCard.addSubview(predictionsHeader)
+
+        predictionsVelocityLabel.font = UIFont.systemFont(ofSize: 13)
+        predictionsVelocityLabel.translatesAutoresizingMaskIntoConstraints = false
+        predictionsCard.addSubview(predictionsVelocityLabel)
+
+        predictionsTrendLabel.font = UIFont.systemFont(ofSize: 13)
+        predictionsTrendLabel.translatesAutoresizingMaskIntoConstraints = false
+        predictionsCard.addSubview(predictionsTrendLabel)
+
+        predictionsStack.axis = .vertical
+        predictionsStack.spacing = 0
+        predictionsStack.translatesAutoresizingMaskIntoConstraints = false
+        predictionsCard.addSubview(predictionsStack)
+
+        NSLayoutConstraint.activate([
+            predictionsHeader.topAnchor.constraint(equalTo: predictionsCard.topAnchor, constant: 16),
+            predictionsHeader.leadingAnchor.constraint(equalTo: predictionsCard.leadingAnchor, constant: 16),
+            predictionsHeader.trailingAnchor.constraint(equalTo: predictionsCard.trailingAnchor, constant: -16),
+
+            predictionsVelocityLabel.topAnchor.constraint(equalTo: predictionsHeader.bottomAnchor, constant: 8),
+            predictionsVelocityLabel.leadingAnchor.constraint(equalTo: predictionsCard.leadingAnchor, constant: 16),
+
+            predictionsTrendLabel.centerYAnchor.constraint(equalTo: predictionsVelocityLabel.centerYAnchor),
+            predictionsTrendLabel.leadingAnchor.constraint(equalTo: predictionsVelocityLabel.trailingAnchor, constant: 8),
+            predictionsTrendLabel.trailingAnchor.constraint(lessThanOrEqualTo: predictionsCard.trailingAnchor, constant: -16),
+
+            predictionsStack.topAnchor.constraint(equalTo: predictionsVelocityLabel.bottomAnchor, constant: 12),
+            predictionsStack.leadingAnchor.constraint(equalTo: predictionsCard.leadingAnchor, constant: 16),
+            predictionsStack.trailingAnchor.constraint(equalTo: predictionsCard.trailingAnchor, constant: -16),
+            predictionsStack.bottomAnchor.constraint(equalTo: predictionsCard.bottomAnchor, constant: -16)
+        ])
+    }
+
     private func setupAllLevelsCard() {
         allLevelsCard.layer.cornerRadius = 12
 
@@ -286,6 +335,7 @@ class DreamingProgressViewController: PCViewController {
         totalInputCard.backgroundColor = cardBg
         levelCard.backgroundColor = cardBg
         chartCard.backgroundColor = cardBg
+        predictionsCard.backgroundColor = cardBg
         allLevelsCard.backgroundColor = cardBg
 
         let headerColor = ThemeColor.primaryText01()
@@ -293,6 +343,7 @@ class DreamingProgressViewController: PCViewController {
         totalInputHeader.textColor = headerColor
         totalInputValue.textColor = headerColor
         levelHeader.textColor = headerColor
+        predictionsHeader.textColor = headerColor
         allLevelsHeader.textColor = headerColor
 
         let subtitleColor = ThemeColor.primaryText02()
@@ -340,6 +391,7 @@ class DreamingProgressViewController: PCViewController {
         updateTotalInputCard()
         updateLevelCard()
         updateChartCard()
+        updatePredictionsCard()
         updateAllLevelsCard()
         updateFillColors()
     }
@@ -481,6 +533,85 @@ class DreamingProgressViewController: PCViewController {
         }
 
         return points
+    }
+
+    private func updatePredictionsCard() {
+        predictionsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+
+        guard let (velocity, predictions) = DreamingManager.shared.calculateMilestonePredictions() else {
+            predictionsCard.isHidden = true
+            return
+        }
+        predictionsCard.isHidden = false
+
+        let primaryText = ThemeColor.primaryText01()
+        let subtitleText = ThemeColor.primaryText02()
+
+        predictionsVelocityLabel.text = String(format: "%.1fh/day", velocity.velocity)
+        predictionsVelocityLabel.textColor = primaryText
+
+        let trendText: String
+        let trendColor: UIColor
+        switch velocity.trend {
+        case .increasing:
+            trendText = "\u{2197} Increasing"
+            trendColor = ThemeColor.support02()
+        case .decreasing:
+            trendText = "\u{2198} Decreasing"
+            trendColor = ThemeColor.support05()
+        case .stable:
+            trendText = "\u{2192} Stable"
+            trendColor = subtitleText
+        }
+        predictionsTrendLabel.text = trendText
+        predictionsTrendLabel.textColor = trendColor
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+
+        for prediction in predictions {
+            let row = UIView()
+
+            let levelLabel = UILabel()
+            levelLabel.text = "Level \(prediction.milestoneLevel) — \(Int(prediction.milestoneHours))h"
+            levelLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            levelLabel.textColor = primaryText
+            levelLabel.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(levelLabel)
+
+            let detailStack = UIStackView()
+            detailStack.axis = .vertical
+            detailStack.alignment = .trailing
+            detailStack.spacing = 2
+            detailStack.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(detailStack)
+
+            let dateLabel = UILabel()
+            dateLabel.text = dateFormatter.string(from: prediction.estimatedDate)
+            dateLabel.font = UIFont.systemFont(ofSize: 13)
+            dateLabel.textColor = primaryText
+            dateLabel.textAlignment = .right
+            detailStack.addArrangedSubview(dateLabel)
+
+            let rangeLabel = UILabel()
+            rangeLabel.text = "\(dateFormatter.string(from: prediction.optimisticDate)) – \(dateFormatter.string(from: prediction.pessimisticDate))"
+            rangeLabel.font = UIFont.systemFont(ofSize: 11)
+            rangeLabel.textColor = subtitleText
+            rangeLabel.textAlignment = .right
+            detailStack.addArrangedSubview(rangeLabel)
+
+            NSLayoutConstraint.activate([
+                levelLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                levelLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                detailStack.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                detailStack.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+                detailStack.leadingAnchor.constraint(greaterThanOrEqualTo: levelLabel.trailingAnchor, constant: 8),
+                row.heightAnchor.constraint(equalToConstant: 48)
+            ])
+
+            predictionsStack.addArrangedSubview(row)
+        }
     }
 
     private func updateAllLevelsCard() {

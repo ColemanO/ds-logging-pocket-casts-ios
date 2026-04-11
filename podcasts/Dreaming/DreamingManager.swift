@@ -410,6 +410,142 @@ class DreamingManager {
         cachedDayWatchedTimes = nil
     }
 
+    // MARK: - Milestone Predictions
+
+    enum VelocityTrend {
+        case increasing
+        case decreasing
+        case stable
+    }
+
+    struct VelocityInfo {
+        let currentHours: Double
+        let velocity: Double
+        let trend: VelocityTrend
+    }
+
+    struct MilestonePrediction {
+        let milestoneLevel: Int
+        let milestoneHours: Double
+        let estimatedDaysRemaining: Int
+        let estimatedDate: Date
+        let optimisticDate: Date
+        let pessimisticDate: Date
+    }
+
+    private static let milestoneThresholds: [(level: Int, hours: Double)] = [
+        (1, 0), (2, 50), (3, 150), (4, 300), (5, 600), (6, 1000), (7, 1500)
+    ]
+
+    func calculateMilestonePredictions() -> (VelocityInfo, [MilestonePrediction])? {
+        guard let dayTimes = cachedDayWatchedTimes, !dayTimes.isEmpty else { return nil }
+
+        // Build current total hours
+        var initialSeconds = 0.0
+        if let externalTimes = cachedExternalTimes {
+            initialSeconds = externalTimes
+                .filter { $0.type == "initial" }
+                .reduce(0.0) { $0 + $1.timeSeconds }
+        }
+        let totalDaySeconds = dayTimes.reduce(0.0) { $0 + $1.timeSeconds }
+        let currentHours = (initialSeconds + totalDaySeconds) / 3600.0
+
+        // Build last 30 days of daily hours (filling gaps with zero)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        var hoursByDate: [String: Double] = [:]
+        for entry in dayTimes {
+            hoursByDate[entry.date, default: 0] += entry.timeSeconds / 3600.0
+        }
+
+        let today = Date()
+        let cal = Calendar.current
+        var last30: [Double] = []
+        for i in 0..<30 {
+            let date = cal.date(byAdding: .day, value: -i, to: today)!
+            let key = formatter.string(from: date)
+            last30.append(hoursByDate[key] ?? 0)
+        }
+        // last30[0] = today, last30[29] = 29 days ago
+
+        // Weighted velocity: exponential decay, day 0 weight=1.0, day 29 weight≈0.25
+        let decayRate = log(4.0) / 29.0 // so exp(-decayRate * 29) ≈ 0.25
+        var weightedSum = 0.0
+        var weightSum = 0.0
+        for i in 0..<30 {
+            let weight = exp(-decayRate * Double(i))
+            weightedSum += last30[i] * weight
+            weightSum += weight
+        }
+        let velocity = weightedSum / weightSum
+
+        guard velocity >= 0.01 else { return nil }
+
+        // Standard deviation of the 30 daily values
+        let mean = last30.reduce(0, +) / 30.0
+        let variance = last30.reduce(0.0) { $0 + ($1 - mean) * ($1 - mean) } / 30.0
+        let stddev = sqrt(variance)
+
+        let optimisticVelocity = velocity + stddev
+        let pessimisticVelocity = max(velocity - stddev, 0.01)
+
+        // Trend: weighted avg of days 0-14 vs days 15-29
+        var recentWeighted = 0.0, recentWeightSum = 0.0
+        var olderWeighted = 0.0, olderWeightSum = 0.0
+        for i in 0..<15 {
+            let weight = exp(-decayRate * Double(i))
+            recentWeighted += last30[i] * weight
+            recentWeightSum += weight
+        }
+        for i in 15..<30 {
+            let weight = exp(-decayRate * Double(i))
+            olderWeighted += last30[i] * weight
+            olderWeightSum += weight
+        }
+        let recentAvg = recentWeighted / recentWeightSum
+        let olderAvg = olderWeighted / olderWeightSum
+
+        let trend: VelocityTrend
+        if olderAvg < 0.01 {
+            trend = recentAvg > 0.01 ? .increasing : .stable
+        } else {
+            let ratio = recentAvg / olderAvg
+            if ratio > 1.1 {
+                trend = .increasing
+            } else if ratio < 0.9 {
+                trend = .decreasing
+            } else {
+                trend = .stable
+            }
+        }
+
+        let velocityInfo = VelocityInfo(currentHours: currentHours, velocity: velocity, trend: trend)
+
+        // Predictions for all remaining milestones
+        var predictions: [MilestonePrediction] = []
+        for threshold in Self.milestoneThresholds {
+            guard threshold.hours > currentHours else { continue }
+
+            let remaining = threshold.hours - currentHours
+            let estDays = Int(ceil(remaining / velocity))
+            let optDays = Int(ceil(remaining / optimisticVelocity))
+            let pesDays = Int(ceil(remaining / pessimisticVelocity))
+
+            predictions.append(MilestonePrediction(
+                milestoneLevel: threshold.level,
+                milestoneHours: threshold.hours,
+                estimatedDaysRemaining: estDays,
+                estimatedDate: cal.date(byAdding: .day, value: estDays, to: today)!,
+                optimisticDate: cal.date(byAdding: .day, value: optDays, to: today)!,
+                pessimisticDate: cal.date(byAdding: .day, value: pesDays, to: today)!
+            ))
+        }
+
+        guard !predictions.isEmpty else { return nil }
+        return (velocityInfo, predictions)
+    }
+
     // MARK: - Single Episode Logging
 
     func logEpisodeCompletion(episode: BaseEpisode, podcastTitle: String?) {
