@@ -477,7 +477,7 @@ class DreamingProgressViewController: PCViewController {
         for entry in sorted {
             guard let date = formatter.date(from: entry.date) else { continue }
             cumulative += entry.timeSeconds / 3600.0
-            points.append(.init(date: date, cumulativeHours: cumulative))
+            points.append(.init(date: date, cumulativeHours: cumulative, goalReached: entry.goalReached))
         }
 
         return points

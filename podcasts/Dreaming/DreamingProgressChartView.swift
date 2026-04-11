@@ -10,6 +10,7 @@ struct DreamingProgressChartView: View {
         let id = UUID()
         let date: Date
         let cumulativeHours: Double
+        let goalReached: Bool
     }
 
     enum DateRange: Hashable {
@@ -160,8 +161,55 @@ struct DreamingProgressChartView: View {
                     }
                 }
             }
+
+            if !filteredPoints.isEmpty {
+                statsBar
+            }
         }
         .padding(16)
+    }
+
+    // MARK: - Stats
+
+    private var statsBar: some View {
+        let points = filteredPoints
+        let totalHours = periodTotalHours(points)
+        let days = max(points.count, 1)
+        let avgDaily = totalHours / Double(days)
+        let goalsHit = points.filter { $0.goalReached }.count
+
+        return HStack(spacing: 0) {
+            statItem(value: String(format: "%.1fh", totalHours), label: "Total")
+            statItem(value: String(format: "%.1fh", avgDaily), label: "Daily Avg")
+            statItem(value: "\(goalsHit) / \(days)", label: "Goals Hit")
+        }
+    }
+
+    private func periodTotalHours(_ points: [DataPoint]) -> Double {
+        guard !points.isEmpty else { return 0 }
+        var total = 0.0
+        for i in 0..<points.count {
+            if i == 0 {
+                // Find this point in the full dataset to get the previous day's cumulative
+                if let allIndex = dataPoints.firstIndex(where: { $0.date == points[0].date }), allIndex > 0 {
+                    total += points[0].cumulativeHours - dataPoints[allIndex - 1].cumulativeHours
+                }
+            } else {
+                total += points[i].cumulativeHours - points[i - 1].cumulativeHours
+            }
+        }
+        return total
+    }
+
+    private func statItem(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 14, weight: .semibold))
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Date Range Bar
