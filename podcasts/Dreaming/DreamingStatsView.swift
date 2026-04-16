@@ -8,12 +8,16 @@ struct DreamingStatsView: View {
     let dayWatchedTimes: [DreamingManager.DayWatchedTimeEntry]
 
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedRange: DateRange = .all
 
-    enum DateRange: Hashable {
-        case month(Date)
-        case past1W, mtd, past1M, ytd, past1Y, all
+    enum Period: String, CaseIterable {
+        case week = "Week"
+        case month = "Month"
+        case year = "Year"
+        case all = "All"
     }
+
+    @State private var period: Period = .all
+    @State private var offset: Int = 0 // 0 = current, -1 = previous, etc.
 
     var body: some View {
         NavigationView {
@@ -46,22 +50,25 @@ struct DreamingStatsView: View {
     // MARK: - Date Range Selector
 
     private var dateRangeSelector: some View {
-        HStack(spacing: 8) {
-            dropdownMenu(label: presetLabel, isActive: isPresetActive) {
-                Button("1W") { selectedRange = .past1W }
-                Button("MTD") { selectedRange = .mtd }
-                Button("1M") { selectedRange = .past1M }
-                Button("YTD") { selectedRange = .ytd }
-                Button("1Y") { selectedRange = .past1Y }
-                Button("All") { selectedRange = .all }
-            }
+        HStack(spacing: 12) {
+            periodDropdown
 
-            dropdownMenu(label: monthLabel, isActive: isMonthActive) {
-                ForEach(availableMonths, id: \.self) { month in
-                    Button(monthFormatter.string(from: month)) {
-                        selectedRange = .month(month)
-                    }
+            if period != .all {
+                Button(action: { offset -= 1 }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .medium))
                 }
+                .disabled(!canGoBack)
+
+                Text(periodLabel)
+                    .font(.system(size: 13, weight: .medium))
+                    .frame(minWidth: 80)
+
+                Button(action: { offset += 1 }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .disabled(offset >= 0)
             }
 
             Spacer()
@@ -69,61 +76,61 @@ struct DreamingStatsView: View {
         .padding(.horizontal, 16)
     }
 
-    private var presetLabel: String {
-        switch selectedRange {
-        case .past1W: return "1W"
-        case .mtd: return "MTD"
-        case .past1M: return "1M"
-        case .ytd: return "YTD"
-        case .past1Y: return "1Y"
-        case .all: return "All"
-        case .month: return "Preset"
-        }
-    }
-
-    private var isPresetActive: Bool {
-        switch selectedRange {
-        case .month: return false
-        default: return true
-        }
-    }
-
-    private var monthLabel: String {
-        switch selectedRange {
-        case .month(let date): return monthFormatter.string(from: date)
-        default: return "Month"
-        }
-    }
-
-    private var isMonthActive: Bool {
-        switch selectedRange {
-        case .month: return true
-        default: return false
-        }
-    }
-
-    private var monthFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.dateFormat = "MMM yyyy"
-        return f
-    }
-
-    private func dropdownMenu<Content: View>(label: String, isActive: Bool, @ViewBuilder content: () -> Content) -> some View {
+    private var periodDropdown: some View {
         Menu {
-            content()
+            ForEach(Period.allCases, id: \.self) { p in
+                Button(p.rawValue) {
+                    period = p
+                    offset = 0
+                }
+            }
         } label: {
             HStack(spacing: 4) {
-                Text(label)
-                    .font(.system(size: 12, weight: isActive ? .semibold : .regular))
+                Text(period.rawValue)
+                    .font(.system(size: 12, weight: .semibold))
                 Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .medium))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(isActive ? Color.blue.opacity(0.15) : Color.clear)
-            .foregroundColor(isActive ? .blue : .secondary)
+            .background(Color.blue.opacity(0.15))
+            .foregroundColor(.blue)
             .cornerRadius(8)
         }
+    }
+
+    // MARK: - Period Label
+
+    private var periodLabel: String {
+        let cal = Calendar.current
+        let now = Date()
+
+        switch period {
+        case .week:
+            let weekStart = cal.date(byAdding: .weekOfYear, value: offset, to: startOfWeek(now))!
+            let weekEnd = cal.date(byAdding: .day, value: 6, to: weekStart)!
+            let fmt = DateFormatter()
+            fmt.dateFormat = "MMM d"
+            return "\(fmt.string(from: weekStart)) – \(fmt.string(from: weekEnd))"
+        case .month:
+            let monthStart = cal.date(byAdding: .month, value: offset, to: startOfMonth(now))!
+            let fmt = DateFormatter()
+            fmt.dateFormat = "MMMM yyyy"
+            return fmt.string(from: monthStart)
+        case .year:
+            let yearStart = cal.date(byAdding: .year, value: offset, to: startOfYear(now))!
+            let fmt = DateFormatter()
+            fmt.dateFormat = "yyyy"
+            return fmt.string(from: yearStart)
+        case .all:
+            return "All"
+        }
+    }
+
+    private var canGoBack: Bool {
+        guard let earliest = chartDataPoints.first?.date else { return false }
+        guard let interval = dateRangeInterval else { return false }
+        return interval.start > earliest
     }
 
     // MARK: - Date Range Interval
@@ -131,27 +138,43 @@ struct DreamingStatsView: View {
     private var dateRangeInterval: (start: Date, end: Date)? {
         let cal = Calendar.current
         let now = Date()
-        switch selectedRange {
+
+        switch period {
         case .all:
             return nil
-        case .past1W:
-            return (cal.date(byAdding: .day, value: -7, to: now)!, now)
-        case .mtd:
-            let comps = cal.dateComponents([.year, .month], from: now)
-            return (cal.date(from: comps)!, now)
-        case .past1M:
-            return (cal.date(byAdding: .month, value: -1, to: now)!, now)
-        case .ytd:
-            let comps = DateComponents(year: cal.component(.year, from: now), month: 1, day: 1)
-            return (cal.date(from: comps)!, now)
-        case .past1Y:
-            return (cal.date(byAdding: .year, value: -1, to: now)!, now)
-        case .month(let monthDate):
-            let start = monthDate
-            var end = cal.date(byAdding: .month, value: 1, to: start)!
-            end = cal.date(byAdding: .second, value: -1, to: end)!
-            return (start, end)
+        case .week:
+            let weekStart = cal.date(byAdding: .weekOfYear, value: offset, to: startOfWeek(now))!
+            let weekEnd = cal.date(byAdding: .day, value: 6, to: weekStart)!
+            return (weekStart, min(weekEnd, now))
+        case .month:
+            let monthStart = cal.date(byAdding: .month, value: offset, to: startOfMonth(now))!
+            let monthEnd = cal.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart)!
+            return (monthStart, min(monthEnd, now))
+        case .year:
+            let yearStart = cal.date(byAdding: .year, value: offset, to: startOfYear(now))!
+            let yearEnd = cal.date(byAdding: DateComponents(year: 1, day: -1), to: yearStart)!
+            return (yearStart, min(yearEnd, now))
         }
+    }
+
+    // MARK: - Calendar Helpers
+
+    private func startOfWeek(_ date: Date) -> Date {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        return cal.date(from: comps)!
+    }
+
+    private func startOfMonth(_ date: Date) -> Date {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.year, .month], from: date)
+        return cal.date(from: comps)!
+    }
+
+    private func startOfYear(_ date: Date) -> Date {
+        let cal = Calendar.current
+        let comps = DateComponents(year: cal.component(.year, from: date), month: 1, day: 1)
+        return cal.date(from: comps)!
     }
 
     // MARK: - Filtered Data
@@ -188,22 +211,6 @@ struct DreamingStatsView: View {
             .filter { $0.type != "initial" }
             .reduce(0.0) { $0 + $1.timeSeconds }
         return max(totalDaySeconds - nonInitialExternalSeconds, 0)
-    }
-
-    // MARK: - Available Months
-
-    private var availableMonths: [Date] {
-        let cal = Calendar.current
-        var months: [Date] = []
-        var seen: Set<String> = []
-        for point in chartDataPoints {
-            let comps = cal.dateComponents([.year, .month], from: point.date)
-            let key = "\(comps.year!)-\(comps.month!)"
-            if seen.insert(key).inserted, let first = cal.date(from: comps) {
-                months.append(first)
-            }
-        }
-        return months.sorted().reversed()
     }
 
     // MARK: - Input Breakdown Slices
@@ -246,7 +253,6 @@ struct DreamingStatsView: View {
         let listeningEntries = filteredExternalTimes.filter { $0.type == "listening" }
         let episodeSuffixPattern = #"\s*-\s*[Ee]ps?\s*[\d:,\s\-]+$"#
 
-        var podcastSeconds: [(name: String, seconds: Double)] = []
         var seenNames: [String: String] = [:] // lowercased -> first-seen display name
         var secondsByName: [String: Double] = [:]
 
@@ -259,10 +265,7 @@ struct DreamingStatsView: View {
             secondsByName[key, default: 0] += entry.timeSeconds
         }
 
-        for (key, seconds) in secondsByName {
-            podcastSeconds.append((name: seenNames[key]!, seconds: seconds))
-        }
-
+        var podcastSeconds = secondsByName.map { (name: seenNames[$0.key]!, seconds: $0.value) }
         podcastSeconds.sort { $0.seconds > $1.seconds }
 
         let totalSeconds = podcastSeconds.reduce(0.0) { $0 + $1.seconds }
