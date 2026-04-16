@@ -5838,3 +5838,60 @@
 
 /* Message to shown then trying to open playback from deep link but it's not available */
 "playback_not_available" = "Playback unavailable";
+
+/* Talk tab title */
+"talk" = "Talk";
+
+/* Button to manually log a talk session */
+"talk_log_manually" = "Log Manually";
+
+/* Header for recent talk sessions list */
+"talk_recent_sessions" = "Recent Sessions";
+
+/* Navigation title for the log session summary screen */
+"talk_log_session" = "Log Session";
+
+/* Talk type: crosstalk */
+"talk_type_crosstalk" = "Crosstalk";
+
+/* Talk type: output */
+"talk_type_output" = "Output";
+
+/* Default description for a crosstalk session */
+"talk_crosstalk_session" = "Crosstalk session";
+
+/* Default description for an output session */
+"talk_output_session" = "Output session";
+
+/* Discard button on talk session summary */
+"talk_discard" = "Discard";
+
+/* Log button on talk session summary */
+"talk_log" = "Log";
+
+/* Duration section header */
+"talk_duration" = "Duration";
+
+/* Type section header */
+"talk_type" = "Type";
+
+/* Description section header */
+"talk_description" = "Description";
+
+/* Date section header */
+"talk_date" = "Date";
+
+/* Error alert when talk session fails to log */
+"talk_failed_to_log" = "Failed to log session";
+
+/* Start button for talk timer */
+"talk_start" = "Start";
+
+/* Stop button for talk timer */
+"talk_stop" = "Stop";
+
+/* Pause button for talk timer */
+"talk_pause" = "Pause";
+
+/* Resume button for talk timer */
+"talk_resume" = "Resume";

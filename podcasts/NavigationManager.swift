@@ -243,7 +243,7 @@ class NavigationManager {
         } else if place == NavigationManager.settingsGeneralKey {
             mainController?.showGeneralSettings(row: data?[NavigationManager.settingsGeneralRowKey] as? GeneralSettingsViewController.TableRow)
         } else if place == NavigationManager.upNextPageKey {
-            mainController?.navigateToUpNext(true)
+            mainController?.navigateToTalk(true)
         } else if place == NavigationManager.signUpPageKey {
             mainController?.showSignUp()
         } else if place == NavigationManager.settingsPageKey {

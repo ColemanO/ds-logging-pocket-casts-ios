@@ -34,17 +34,7 @@ class DreamingProgressViewController: PCViewController {
     private let levelLabel = UILabel()
     private var levelFillWidth: NSLayoutConstraint?
 
-    // Progress Chart card
-    private let chartCard = UIView()
-    private var chartHostingController: UIViewController?
-
-    // Input Breakdown card
-    private let breakdownCard = UIView()
-    private var breakdownHostingController: UIViewController?
-
-    // Podcast Breakdown card
-    private let podcastBreakdownCard = UIView()
-    private var podcastBreakdownHostingController: UIViewController?
+    private let viewStatsButton = UIButton(type: .system)
 
     // Predictions card
     private let predictionsCard = UIView()
@@ -122,17 +112,11 @@ class DreamingProgressViewController: PCViewController {
 
         setupDailyGoalCard()
         setupTotalLevelCard()
-        setupChartCard()
-        setupBreakdownCard()
-        setupPodcastBreakdownCard()
         setupPredictionsCard()
         setupAllLevelsCard()
 
         stackView.addArrangedSubview(dailyGoalCard)
         stackView.addArrangedSubview(totalLevelCard)
-        stackView.addArrangedSubview(chartCard)
-        stackView.addArrangedSubview(breakdownCard)
-        stackView.addArrangedSubview(podcastBreakdownCard)
         stackView.addArrangedSubview(predictionsCard)
         stackView.addArrangedSubview(allLevelsCard)
     }
@@ -215,6 +199,12 @@ class DreamingProgressViewController: PCViewController {
         levelLabel.translatesAutoresizingMaskIntoConstraints = false
         totalLevelCard.addSubview(levelLabel)
 
+        viewStatsButton.setTitle("View Stats", for: .normal)
+        viewStatsButton.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .medium)
+        viewStatsButton.addTarget(self, action: #selector(showStats), for: .touchUpInside)
+        viewStatsButton.translatesAutoresizingMaskIntoConstraints = false
+        totalLevelCard.addSubview(viewStatsButton)
+
         NSLayoutConstraint.activate([
             totalInputValue.topAnchor.constraint(equalTo: totalLevelCard.topAnchor, constant: 16),
             totalInputValue.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
@@ -241,16 +231,11 @@ class DreamingProgressViewController: PCViewController {
             levelLabel.topAnchor.constraint(equalTo: levelTrack.bottomAnchor, constant: 8),
             levelLabel.leadingAnchor.constraint(equalTo: totalLevelCard.leadingAnchor, constant: 16),
             levelLabel.trailingAnchor.constraint(equalTo: totalLevelCard.trailingAnchor, constant: -16),
-            levelLabel.bottomAnchor.constraint(equalTo: totalLevelCard.bottomAnchor, constant: -16)
+
+            viewStatsButton.topAnchor.constraint(equalTo: levelLabel.bottomAnchor, constant: 16),
+            viewStatsButton.centerXAnchor.constraint(equalTo: totalLevelCard.centerXAnchor),
+            viewStatsButton.bottomAnchor.constraint(equalTo: totalLevelCard.bottomAnchor, constant: -16)
         ])
-    }
-
-    private func setupChartCard() {
-        chartCard.layer.cornerRadius = 12
-    }
-
-    private func setupBreakdownCard() {
-        breakdownCard.layer.cornerRadius = 12
     }
 
     private func setupPredictionsCard() {
@@ -327,9 +312,6 @@ class DreamingProgressViewController: PCViewController {
         let cardBg = ThemeColor.primaryUi02()
         dailyGoalCard.backgroundColor = cardBg
         totalLevelCard.backgroundColor = cardBg
-        chartCard.backgroundColor = cardBg
-        breakdownCard.backgroundColor = cardBg
-        podcastBreakdownCard.backgroundColor = cardBg
         predictionsCard.backgroundColor = cardBg
         allLevelsCard.backgroundColor = cardBg
 
@@ -383,9 +365,6 @@ class DreamingProgressViewController: PCViewController {
     private func updateCards() {
         updateDailyGoalCard()
         updateTotalLevelCard()
-        updateChartCard()
-        updateBreakdownCard()
-        updatePodcastBreakdownCard()
         updatePredictionsCard()
         updateAllLevelsCard()
         updateFillColors()
@@ -465,38 +444,6 @@ class DreamingProgressViewController: PCViewController {
         }
     }
 
-    private func updateChartCard() {
-        guard #available(iOS 16.0, *) else { return }
-
-        let dataPoints = buildChartDataPoints()
-        let chartView = DreamingProgressChartView(
-            dataPoints: dataPoints,
-            levelThresholds: Self.levelThresholds
-        )
-
-        // Remove previous hosting controller
-        if let existing = chartHostingController {
-            existing.willMove(toParent: nil)
-            existing.view.removeFromSuperview()
-            existing.removeFromParent()
-        }
-
-        let hostingController = UIHostingController(rootView: chartView)
-        hostingController.view.backgroundColor = .clear
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-
-        addChild(hostingController)
-        chartCard.addSubview(hostingController.view)
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: chartCard.topAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: chartCard.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: chartCard.trailingAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: chartCard.bottomAnchor)
-        ])
-        hostingController.didMove(toParent: self)
-        chartHostingController = hostingController
-    }
-
     private func buildChartDataPoints() -> [DreamingProgressChartView.DataPoint] {
         guard #available(iOS 16.0, *) else { return [] }
         guard let dayTimes = DreamingManager.shared.cachedDayWatchedTimes, !dayTimes.isEmpty else { return [] }
@@ -523,168 +470,6 @@ class DreamingProgressViewController: PCViewController {
         }
 
         return points
-    }
-
-    private func updateBreakdownCard() {
-        guard #available(iOS 17.0, *) else {
-            breakdownCard.isHidden = true
-            return
-        }
-
-        let slices = buildBreakdownSlices()
-        let breakdownView = DreamingInputBreakdownView(title: "Input Breakdown", slices: slices)
-
-        if let existing = breakdownHostingController {
-            existing.willMove(toParent: nil)
-            existing.view.removeFromSuperview()
-            existing.removeFromParent()
-        }
-
-        let hostingController = UIHostingController(rootView: breakdownView)
-        hostingController.view.backgroundColor = .clear
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-
-        addChild(hostingController)
-        breakdownCard.addSubview(hostingController.view)
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: breakdownCard.topAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: breakdownCard.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: breakdownCard.trailingAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: breakdownCard.bottomAnchor)
-        ])
-        hostingController.didMove(toParent: self)
-        breakdownHostingController = hostingController
-    }
-
-    @available(iOS 17.0, *)
-    private func buildBreakdownSlices() -> [DreamingInputBreakdownView.Slice] {
-
-        let platformHours = (DreamingManager.shared.cachedPlatformWatchTimeSeconds ?? 0) / 3600.0
-
-        var initialHours = 0.0
-        var podcastHours = 0.0
-        var externalVideoHours = 0.0
-        var talkingHours = 0.0
-
-        if let externalTimes = DreamingManager.shared.cachedExternalTimes {
-            for entry in externalTimes {
-                let hours = entry.timeSeconds / 3600.0
-                switch entry.type {
-                case "initial":
-                    initialHours += hours
-                case "listening":
-                    podcastHours += hours
-                case "watching":
-                    externalVideoHours += hours
-                case "talking":
-                    talkingHours += hours
-                default:
-                    break
-                }
-            }
-        }
-
-        return [
-            .init(label: "Dreaming Spanish", hours: platformHours, color: .blue),
-            .init(label: "Initial", hours: initialHours, color: .gray),
-            .init(label: "Podcasts", hours: podcastHours, color: .green),
-            .init(label: "External Videos", hours: externalVideoHours, color: .orange),
-            .init(label: "Talking", hours: talkingHours, color: .purple),
-        ]
-    }
-
-    private func setupPodcastBreakdownCard() {
-        podcastBreakdownCard.layer.cornerRadius = 12
-    }
-
-    private func updatePodcastBreakdownCard() {
-        guard #available(iOS 17.0, *) else {
-            podcastBreakdownCard.isHidden = true
-            return
-        }
-
-        let slices = buildPodcastBreakdownSlices()
-        if slices.isEmpty || slices.allSatisfy({ $0.hours <= 0 }) {
-            podcastBreakdownCard.isHidden = true
-            return
-        }
-        podcastBreakdownCard.isHidden = false
-
-        let breakdownView = DreamingInputBreakdownView(title: "Podcast Breakdown", slices: slices)
-
-        if let existing = podcastBreakdownHostingController {
-            existing.willMove(toParent: nil)
-            existing.view.removeFromSuperview()
-            existing.removeFromParent()
-        }
-
-        let hostingController = UIHostingController(rootView: breakdownView)
-        hostingController.view.backgroundColor = .clear
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-
-        addChild(hostingController)
-        podcastBreakdownCard.addSubview(hostingController.view)
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: podcastBreakdownCard.topAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: podcastBreakdownCard.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: podcastBreakdownCard.trailingAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: podcastBreakdownCard.bottomAnchor)
-        ])
-        hostingController.didMove(toParent: self)
-        podcastBreakdownHostingController = hostingController
-    }
-
-    private static let podcastColors: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .red, .teal, .indigo, .mint, .cyan, .brown, .yellow
-    ]
-
-    @available(iOS 17.0, *)
-    private func buildPodcastBreakdownSlices() -> [DreamingInputBreakdownView.Slice] {
-        guard let externalTimes = DreamingManager.shared.cachedExternalTimes else { return [] }
-
-        let listeningEntries = externalTimes.filter { $0.type == "listening" }
-        guard !listeningEntries.isEmpty else { return [] }
-
-        // Group by podcast name, stripping " - Ep X" suffix
-        let episodePattern = try! NSRegularExpression(pattern: #"\s*-\s*[Ee]ps?\s*[\d:,\s\-]+$"#)
-        var hoursByPodcast: [String: Double] = [:]
-        var displayNames: [String: String] = [:]
-
-        for entry in listeningEntries {
-            let desc = entry.description
-            let range = NSRange(desc.startIndex..., in: desc)
-            let podcastName = episodePattern.stringByReplacingMatches(in: desc, range: range, withTemplate: "")
-                .trimmingCharacters(in: .whitespaces)
-            let key = podcastName.lowercased()
-            if hoursByPodcast[key] == nil {
-                displayNames[key] = podcastName
-            }
-            hoursByPodcast[key, default: 0] += entry.timeSeconds / 3600.0
-        }
-
-        let totalHours = hoursByPodcast.values.reduce(0, +)
-        let threshold = totalHours * 0.01
-        var otherHours = 0.0
-        var mainEntries: [(key: String, value: Double)] = []
-
-        for pair in hoursByPodcast.sorted(by: { $0.value > $1.value }) {
-            if pair.value < threshold {
-                otherHours += pair.value
-            } else {
-                mainEntries.append(pair)
-            }
-        }
-
-        let colors = Self.podcastColors
-        var slices = mainEntries.enumerated().map { index, pair in
-            DreamingInputBreakdownView.Slice(label: displayNames[pair.key] ?? pair.key, hours: pair.value, color: colors[index % colors.count])
-        }
-
-        if otherHours > 0 {
-            slices.append(.init(label: "Other", hours: otherHours, color: .gray))
-        }
-
-        return slices
     }
 
     private func updatePredictionsCard() {
@@ -843,6 +628,20 @@ class DreamingProgressViewController: PCViewController {
 
             allLevelsStack.addArrangedSubview(row)
         }
+    }
+
+    // MARK: - Stats Modal
+
+    @objc private func showStats() {
+        guard #available(iOS 16.0, *) else { return }
+        let statsView = DreamingStatsView(
+            chartDataPoints: buildChartDataPoints(),
+            levelThresholds: Self.levelThresholds,
+            externalTimes: DreamingManager.shared.cachedExternalTimes ?? [],
+            dayWatchedTimes: DreamingManager.shared.cachedDayWatchedTimes ?? []
+        )
+        let hostingController = UIHostingController(rootView: statsView)
+        present(hostingController, animated: true)
     }
 
     // MARK: - Helpers

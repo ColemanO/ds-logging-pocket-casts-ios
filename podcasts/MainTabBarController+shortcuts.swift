@@ -34,8 +34,8 @@ extension MainTabBarController {
         let discoverCommand = UIKeyCommand(title: L10n.discover, action: #selector(handleDiscover), input: "3", modifierFlags: [.command])
         addKeyCommand(discoverCommand)
 
-        let upNextCommand = UIKeyCommand(title: L10n.upNext, action: #selector(handleUpNext), input: "4", modifierFlags: [.command])
-        addKeyCommand(upNextCommand)
+        let talkCommand = UIKeyCommand(title: L10n.talk, action: #selector(handleTalk), input: "4", modifierFlags: [.command])
+        addKeyCommand(talkCommand)
 
         let profileCommand = UIKeyCommand(title: L10n.profile, action: #selector(handleProfile), input: "5", modifierFlags: [.command])
         addKeyCommand(profileCommand)
@@ -72,8 +72,8 @@ extension MainTabBarController {
         navigateToDiscover(true)
     }
 
-    @objc private func handleUpNext() {
-        navigateToUpNext(true)
+    @objc private func handleTalk() {
+        navigateToTalk(true)
     }
 
     @objc private func handleProfile() {

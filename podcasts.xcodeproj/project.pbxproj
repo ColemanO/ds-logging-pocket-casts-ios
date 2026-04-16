@@ -67,6 +67,9 @@
 		10DFE9382C5A8D1300957D0A /* ABTestProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DFE9342C5A8D1300957D0A /* ABTestProviding.swift */; };
 		1B0B5ADC2F88928600DB2B42 /* DreamingProgressChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */; };
 		1B0B5ADE2F8A1F1400DB2B42 /* DreamingInputBreakdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADD2F8A1F1400DB2B42 /* DreamingInputBreakdownView.swift */; };
+		1B0B5AE12F8AA0CF00DB2B42 /* TalkTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AE02F8AA0CF00DB2B42 /* TalkTimerView.swift */; };
+		1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADF2F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift */; };
+		1B0B5AE42F90B08B00DB2B42 /* DreamingStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */; };
 		1B2A05852F35BB0300887710 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
 		2F63CE9528809E5B00A34B51 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F63CE9428809E5A00A34B51 /* ThemeTests.swift */; };
 		2F90990E2A4F88B10044FC55 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F90990D2A4F88B10044FC55 /* ShareViewController.swift */; };
@@ -2272,6 +2275,9 @@
 		14DD11DB5830A48ACE6928B2 /* VoiceBoostN.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = VoiceBoostN.c; sourceTree = "<group>"; };
 		1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingProgressChartView.swift; sourceTree = "<group>"; };
 		1B0B5ADD2F8A1F1400DB2B42 /* DreamingInputBreakdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingInputBreakdownView.swift; sourceTree = "<group>"; };
+		1B0B5ADF2F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkSessionSummaryView.swift; sourceTree = "<group>"; };
+		1B0B5AE02F8AA0CF00DB2B42 /* TalkTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkTimerView.swift; sourceTree = "<group>"; };
+		1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingStatsView.swift; sourceTree = "<group>"; };
 		1BAF00E42F35C7000057B32B /* Pocket Casts App ClipPrototype.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Pocket Casts App ClipPrototype.entitlements"; sourceTree = "<group>"; };
 		1D2A1F95464D843A3E431F2C /* VoiceBoostN.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN.h; sourceTree = "<group>"; };
 		232C32192FA9FA97E332A6E4 /* VoiceBoostN_Internal.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN_Internal.h; sourceTree = "<group>"; };
@@ -5724,6 +5730,9 @@
 		AA0000000000000000000005 /* Dreaming */ = {
 			isa = PBXGroup;
 			children = (
+				1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */,
+				1B0B5ADF2F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift */,
+				1B0B5AE02F8AA0CF00DB2B42 /* TalkTimerView.swift */,
 				1B0B5ADD2F8A1F1400DB2B42 /* DreamingInputBreakdownView.swift */,
 				1B0B5ADB2F88928600DB2B42 /* DreamingProgressChartView.swift */,
 				AA0000000000000000000001 /* DreamingManager.swift */,
@@ -10458,6 +10467,7 @@
 				8BD7A2432C09130C00CF84E8 /* FolderHistoryView.swift in Sources */,
 				F5AD9C4D2C3C705200A01896 /* AudioWaveformView.swift in Sources */,
 				C7FAFF5D2941844C00329B40 /* CancelConfirmationViewModel.swift in Sources */,
+				1B0B5AE42F90B08B00DB2B42 /* DreamingStatsView.swift in Sources */,
 				BD14CCDF1D7D3CB800DB4547 /* SelectedPodcastCell.swift in Sources */,
 				9A32E0882E9569BF00D80860 /* PlaylistArchiveViewCell.swift in Sources */,
 				BD93FDA120157B2000F6EF55 /* PodcastImageView.swift in Sources */,
@@ -10558,6 +10568,8 @@
 				BD5DD2E420109D650031B5DC /* FakeNavViewController.swift in Sources */,
 				BDC063D2246A66B900208446 /* DownloadManager+SessionManagement.swift in Sources */,
 				FF9BCB2B2EA2A14100A25F12 /* NumberListened2025.swift in Sources */,
+				1B0B5AE12F8AA0CF00DB2B42 /* TalkTimerView.swift in Sources */,
+				1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */,
 				F54E72192CA722A000CD5C86 /* Array+DiscoverItem.swift in Sources */,
 				9AA14FA72E37EA5900464A5A /* PlaylistsOnboardingCardView.swift in Sources */,
 				BDE954EC2366898900CEB6DA /* ChaptersViewController+Table.swift in Sources */,

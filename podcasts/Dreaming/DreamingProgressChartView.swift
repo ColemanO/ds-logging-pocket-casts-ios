@@ -4,6 +4,7 @@ import SwiftUI
 @available(iOS 16.0, *)
 struct DreamingProgressChartView: View {
     let dataPoints: [DataPoint]
+    let allDataPoints: [DataPoint]
     let levelThresholds: [(level: Int, hours: Double)]
 
     struct DataPoint: Identifiable {
@@ -13,18 +14,6 @@ struct DreamingProgressChartView: View {
         let goalReached: Bool
     }
 
-    enum DateRange: Hashable {
-        case month(Date) // specific month picker
-        case past1W
-        case mtd
-        case past1M
-        case ytd
-        case past1Y
-        case past5Y
-        case all
-    }
-
-    @State private var selectedRange: DateRange = .all
     @State private var scrubPoint: DataPoint?
     @State private var pinnedPoint: DataPoint?
     @State private var dragStartTime: Date?
@@ -34,9 +23,7 @@ struct DreamingProgressChartView: View {
             Text("Progress Over Time")
                 .font(.system(size: 15, weight: .semibold))
 
-            dateRangeBar
-
-            if filteredPoints.isEmpty {
+            if dataPoints.isEmpty {
                 Text("No data yet")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
@@ -44,7 +31,7 @@ struct DreamingProgressChartView: View {
                     .frame(maxWidth: .infinity)
             } else {
                 Chart {
-                    ForEach(filteredPoints) { point in
+                    ForEach(dataPoints) { point in
                         LineMark(
                             x: .value("Date", point.date),
                             y: .value("Hours", point.cumulativeHours)
@@ -64,7 +51,7 @@ struct DreamingProgressChartView: View {
                         )
                     }
 
-                    ForEach(filteredThresholds, id: \.level) { threshold in
+                    ForEach(visibleThresholds, id: \.level) { threshold in
                         RuleMark(y: .value("Level", threshold.hours))
                             .foregroundStyle(.gray.opacity(0.5))
                             .lineStyle(StrokeStyle(dash: [5, 5]))
@@ -162,7 +149,7 @@ struct DreamingProgressChartView: View {
                 }
             }
 
-            if !filteredPoints.isEmpty {
+            if !dataPoints.isEmpty {
                 statsBar
             }
         }
@@ -172,7 +159,7 @@ struct DreamingProgressChartView: View {
     // MARK: - Stats
 
     private var statsBar: some View {
-        let points = filteredPoints
+        let points = dataPoints
         let totalHours = periodTotalHours(points)
         let days = max(points.count, 1)
         let avgDaily = totalHours / Double(days)
@@ -191,8 +178,8 @@ struct DreamingProgressChartView: View {
         for i in 0..<points.count {
             if i == 0 {
                 // Find this point in the full dataset to get the previous day's cumulative
-                if let allIndex = dataPoints.firstIndex(where: { $0.date == points[0].date }), allIndex > 0 {
-                    total += points[0].cumulativeHours - dataPoints[allIndex - 1].cumulativeHours
+                if let allIndex = allDataPoints.firstIndex(where: { $0.date == points[0].date }), allIndex > 0 {
+                    total += points[0].cumulativeHours - allDataPoints[allIndex - 1].cumulativeHours
                 }
             } else {
                 total += points[i].cumulativeHours - points[i - 1].cumulativeHours
@@ -212,102 +199,10 @@ struct DreamingProgressChartView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Date Range Bar
-
-    private static let presetRanges: [(label: String, range: DateRange)] = [
-        ("1W", .past1W),
-        ("MTD", .mtd),
-        ("1M", .past1M),
-        ("YTD", .ytd),
-        ("1Y", .past1Y),
-        ("All", .all),
-    ]
-
-    private var dateRangeBar: some View {
-        HStack(spacing: 8) {
-            dropdownMenu(label: rangeMenuLabel, isActive: !isMonthSelected) {
-                ForEach(Self.presetRanges, id: \.label) { preset in
-                    Button(preset.label) {
-                        selectedRange = preset.range
-                    }
-                }
-            }
-
-            dropdownMenu(label: monthMenuLabel, isActive: isMonthSelected) {
-                ForEach(availableMonths, id: \.self) { date in
-                    Button(monthLabel(date)) {
-                        selectedRange = .month(date)
-                    }
-                }
-            }
-
-            Spacer()
-        }
-    }
-
-    private func dropdownMenu<Content: View>(label: String, isActive: Bool, @ViewBuilder content: () -> Content) -> some View {
-        Menu {
-            content()
-        } label: {
-            HStack(spacing: 4) {
-                Text(label)
-                    .font(.system(size: 12, weight: isActive ? .semibold : .regular))
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 9, weight: .medium))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(isActive ? Color.blue.opacity(0.15) : Color.clear)
-            .foregroundColor(isActive ? .blue : .secondary)
-            .cornerRadius(8)
-        }
-    }
-
-    private var isMonthSelected: Bool {
-        if case .month = selectedRange { return true }
-        return false
-    }
-
-    private var rangeMenuLabel: String {
-        for preset in Self.presetRanges where preset.range == selectedRange {
-            return preset.label
-        }
-        return "Range"
-    }
-
-    private var monthMenuLabel: String {
-        if case .month(let date) = selectedRange {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM yyyy"
-            return formatter.string(from: date)
-        }
-        return "Month"
-    }
-
-    private var availableMonths: [Date] {
-        let cal = Calendar.current
-        var months: [Date] = []
-        var seen: Set<String> = []
-        for point in dataPoints {
-            let comps = cal.dateComponents([.year, .month], from: point.date)
-            let key = "\(comps.year!)-\(comps.month!)"
-            if seen.insert(key).inserted, let first = cal.date(from: comps) {
-                months.append(first)
-            }
-        }
-        return months.sorted().reversed()
-    }
-
-    private func monthLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date)
-    }
-
     // MARK: - Scrubbing
 
     private func closestPoint(to date: Date) -> DataPoint? {
-        let points = filteredPoints
+        let points = dataPoints
         guard !points.isEmpty else { return nil }
         return points.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }
     }
@@ -354,41 +249,9 @@ struct DreamingProgressChartView: View {
 
     // MARK: - Filtering
 
-    private var dateRangeInterval: (start: Date, end: Date)? {
-        let cal = Calendar.current
-        let now = Date()
-
-        switch selectedRange {
-        case .all:
-            return nil
-        case .past1W:
-            return (cal.date(byAdding: .day, value: -7, to: now)!, now)
-        case .mtd:
-            let start = cal.date(from: cal.dateComponents([.year, .month], from: now))!
-            return (start, now)
-        case .past1M:
-            return (cal.date(byAdding: .month, value: -1, to: now)!, now)
-        case .ytd:
-            let start = cal.date(from: cal.dateComponents([.year], from: now))!
-            return (start, now)
-        case .past1Y:
-            return (cal.date(byAdding: .year, value: -1, to: now)!, now)
-        case .past5Y:
-            return (cal.date(byAdding: .year, value: -5, to: now)!, now)
-        case .month(let monthStart):
-            let end = cal.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart)!
-            return (monthStart, end)
-        }
-    }
-
-    private var filteredPoints: [DataPoint] {
-        guard let interval = dateRangeInterval else { return dataPoints }
-        return dataPoints.filter { $0.date >= interval.start && $0.date <= interval.end }
-    }
-
-    private var filteredThresholds: [(level: Int, hours: Double)] {
-        guard let minHours = filteredPoints.first?.cumulativeHours,
-              let maxHours = filteredPoints.last?.cumulativeHours else { return [] }
+    private var visibleThresholds: [(level: Int, hours: Double)] {
+        guard let minHours = dataPoints.first?.cumulativeHours,
+              let maxHours = dataPoints.last?.cumulativeHours else { return [] }
         let ceiling = maxHours + (maxHours - minHours) * 0.15
         return levelThresholds.filter { $0.hours > 0 && $0.hours >= minHours && $0.hours <= ceiling }
     }

@@ -25,7 +25,7 @@ protocol NavigationProtocol: AnyObject {
     func navigateToAddFilter()
     func presentManualPlaylistsChooser(for episode: Episode, rootViewController: UIViewController?, source: String)
 
-    func navigateToUpNext(_ animated: Bool)
+    func navigateToTalk(_ animated: Bool)
 
     func navigateToFiles()
     func navigateToAddCustom(_ fileURL: URL)

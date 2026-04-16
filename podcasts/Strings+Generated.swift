@@ -4157,6 +4157,44 @@ internal enum L10n {
   internal static var syncProgressUnknownCountSingular: String { return L10n.tr("Localizable", "sync_progress_unknown_count_singular", fallback: "Synced 1 podcast") }
   /// A common string used throughout the app. Used to indicate that the sync process in running.
   internal static var syncing: String { return L10n.tr("Localizable", "syncing", fallback: "Syncing...") }
+  /// Talk tab title
+  internal static var talk: String { return L10n.tr("Localizable", "talk", fallback: "Talk") }
+  /// Default description for a crosstalk session
+  internal static var talkCrosstalkSession: String { return L10n.tr("Localizable", "talk_crosstalk_session", fallback: "Crosstalk session") }
+  /// Date section header
+  internal static var talkDate: String { return L10n.tr("Localizable", "talk_date", fallback: "Date") }
+  /// Description section header
+  internal static var talkDescription: String { return L10n.tr("Localizable", "talk_description", fallback: "Description") }
+  /// Discard button on talk session summary
+  internal static var talkDiscard: String { return L10n.tr("Localizable", "talk_discard", fallback: "Discard") }
+  /// Duration section header
+  internal static var talkDuration: String { return L10n.tr("Localizable", "talk_duration", fallback: "Duration") }
+  /// Error alert when talk session fails to log
+  internal static var talkFailedToLog: String { return L10n.tr("Localizable", "talk_failed_to_log", fallback: "Failed to log session") }
+  /// Log button on talk session summary
+  internal static var talkLog: String { return L10n.tr("Localizable", "talk_log", fallback: "Log") }
+  /// Button to manually log a talk session
+  internal static var talkLogManually: String { return L10n.tr("Localizable", "talk_log_manually", fallback: "Log Manually") }
+  /// Navigation title for the log session summary screen
+  internal static var talkLogSession: String { return L10n.tr("Localizable", "talk_log_session", fallback: "Log Session") }
+  /// Default description for an output session
+  internal static var talkOutputSession: String { return L10n.tr("Localizable", "talk_output_session", fallback: "Output session") }
+  /// Pause button for talk timer
+  internal static var talkPause: String { return L10n.tr("Localizable", "talk_pause", fallback: "Pause") }
+  /// Header for recent talk sessions list
+  internal static var talkRecentSessions: String { return L10n.tr("Localizable", "talk_recent_sessions", fallback: "Recent Sessions") }
+  /// Resume button for talk timer
+  internal static var talkResume: String { return L10n.tr("Localizable", "talk_resume", fallback: "Resume") }
+  /// Start button for talk timer
+  internal static var talkStart: String { return L10n.tr("Localizable", "talk_start", fallback: "Start") }
+  /// Stop button for talk timer
+  internal static var talkStop: String { return L10n.tr("Localizable", "talk_stop", fallback: "Stop") }
+  /// Type section header
+  internal static var talkType: String { return L10n.tr("Localizable", "talk_type", fallback: "Type") }
+  /// Talk type: crosstalk
+  internal static var talkTypeCrosstalk: String { return L10n.tr("Localizable", "talk_type_crosstalk", fallback: "Crosstalk") }
+  /// Talk type: output
+  internal static var talkTypeOutput: String { return L10n.tr("Localizable", "talk_type_output", fallback: "Output") }
   /// Prompt to allow the user to review the Terms of Use.
   internal static var termsOfUse: String { return L10n.tr("Localizable", "terms_of_use", fallback: "Terms of Use") }
   /// Theme name for the Classic theme.

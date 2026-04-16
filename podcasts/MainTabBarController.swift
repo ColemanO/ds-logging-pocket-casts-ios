@@ -8,7 +8,7 @@ import SwiftUI
 
 class MainTabBarController: UITabBarController, NavigationProtocol {
 
-    enum Tab: Int { case podcasts, filter, discover, profile, upNext, dreaming }
+    enum Tab: Int { case podcasts, filter, discover, profile, talk, dreaming }
 
     var pcTabs = [Tab]()
 
@@ -53,7 +53,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
 
         fixTarBarTraitCollectionOnIpadForiOS18()
 
-        pcTabs = [.podcasts, .discover, .upNext, .dreaming, .profile]
+        pcTabs = [.podcasts, .discover, .talk, .dreaming, .profile]
 
         var vcsInTab = [UIViewController]()
 
@@ -67,13 +67,13 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        let upNextViewController = UpNextViewController(source: .tabBar, showingInTab: true)
-        upNextViewController.tabBarItem = UITabBarItem(title: L10n.upNext, image: UIImage(named: "upnext_tab"), tag: pcTabs.firstIndex(of: .upNext)!)
+        let talkViewController = UIHostingController(rootView: TalkTimerView())
+        talkViewController.tabBarItem = UITabBarItem(title: L10n.talk, image: UIImage(systemName: "mic.fill"), tag: pcTabs.firstIndex(of: .talk)!)
 
         let dreamingViewController = DreamingProgressViewController()
         dreamingViewController.tabBarItem = UITabBarItem(title: "Dreaming", image: UIImage(systemName: "chart.bar.fill"), tag: pcTabs.firstIndex(of: .dreaming)!)
 
-        vcsInTab = [podcastsController, discoverViewController, upNextViewController, dreamingViewController, profileViewController]
+        vcsInTab = [podcastsController, discoverViewController, talkViewController, dreamingViewController, profileViewController]
 
         displayEndOfYearBadgeIfNeeded()
 
@@ -383,8 +383,8 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         }
     }
 
-    func navigateToUpNext(_ animated: Bool) {
-        switchToTab(.upNext)
+    func navigateToTalk(_ animated: Bool) {
+        switchToTab(.talk)
     }
 
     func navigateToProfile(row: ProfileViewController.TableRow? = nil, animated: Bool) {
@@ -941,8 +941,8 @@ private extension MainTabBarController {
             event = .discoverTabOpened
         case .profile:
             event = .profileTabOpened
-        case .upNext:
-            event = .upNextTabOpened
+        case .talk:
+            return
         case .dreaming:
             return
         }
