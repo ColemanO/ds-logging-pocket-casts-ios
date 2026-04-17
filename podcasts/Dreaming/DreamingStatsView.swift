@@ -13,6 +13,7 @@ struct DreamingStatsView: View {
         case week = "Week"
         case month = "Month"
         case year = "Year"
+        case level = "Level"
         case all = "All"
     }
 
@@ -28,7 +29,8 @@ struct DreamingStatsView: View {
                     DreamingProgressChartView(
                         dataPoints: filteredChartPoints,
                         allDataPoints: chartDataPoints,
-                        levelThresholds: levelThresholds
+                        levelThresholds: levelThresholds,
+                        initialHours: initialHours
                     )
 
                     if #available(iOS 17.0, *) {
@@ -68,7 +70,7 @@ struct DreamingStatsView: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .medium))
                 }
-                .disabled(offset >= 0)
+                .disabled(!canGoForward)
             }
 
             Spacer()
@@ -122,15 +124,57 @@ struct DreamingStatsView: View {
             let fmt = DateFormatter()
             fmt.dateFormat = "yyyy"
             return fmt.string(from: yearStart)
+        case .level:
+            let lvl = selectedLevel
+            let nextThreshold = levelThresholds.first { $0.level == lvl.level + 1 }
+            let upperLabel = nextThreshold.map { "\(Int($0.hours))" } ?? "∞"
+            return "L\(lvl.level) (\(Int(lvl.hours))–\(upperLabel)h)"
         case .all:
             return "All"
         }
     }
 
+    /// The level threshold selected by the current offset
+    private var selectedLevel: (level: Int, hours: Double) {
+        let currentLevelIndex = currentLevelIndex
+        let targetIndex = max(0, min(currentLevelIndex + offset, levelThresholds.count - 1))
+        return levelThresholds[targetIndex]
+    }
+
+    /// Index of the user's current level in levelThresholds
+    private var currentLevelIndex: Int {
+        guard let lastHours = chartDataPoints.last?.cumulativeHours else { return 0 }
+        var idx = 0
+        for (i, threshold) in levelThresholds.enumerated() {
+            if lastHours >= threshold.hours {
+                idx = i
+            }
+        }
+        return idx
+    }
+
     private var canGoBack: Bool {
-        guard let earliest = chartDataPoints.first?.date else { return false }
-        guard let interval = dateRangeInterval else { return false }
-        return interval.start > earliest
+        switch period {
+        case .all:
+            return false
+        case .level:
+            return (currentLevelIndex + offset) > 0
+        default:
+            guard let earliest = chartDataPoints.first?.date else { return false }
+            guard let interval = dateRangeInterval else { return false }
+            return interval.start > earliest
+        }
+    }
+
+    private var canGoForward: Bool {
+        switch period {
+        case .all:
+            return false
+        case .level:
+            return (currentLevelIndex + offset) < currentLevelIndex
+        default:
+            return offset < 0
+        }
     }
 
     // MARK: - Date Range Interval
@@ -154,6 +198,24 @@ struct DreamingStatsView: View {
             let yearStart = cal.date(byAdding: .year, value: offset, to: startOfYear(now))!
             let yearEnd = cal.date(byAdding: DateComponents(year: 1, day: -1), to: yearStart)!
             return (yearStart, min(yearEnd, now))
+        case .level:
+            let lvl = selectedLevel
+            let nextThreshold = levelThresholds.first { $0.level == lvl.level + 1 }
+
+            // Find the date when cumulative hours first reached this level's threshold
+            let startDate = chartDataPoints.first { $0.cumulativeHours >= lvl.hours }?.date
+                ?? chartDataPoints.first?.date
+
+            // Find the date when cumulative hours first reached the next level's threshold
+            let endDate: Date
+            if let nextHours = nextThreshold?.hours {
+                endDate = chartDataPoints.first { $0.cumulativeHours >= nextHours }?.date ?? now
+            } else {
+                endDate = now
+            }
+
+            guard let start = startDate else { return nil }
+            return (start, endDate)
         }
     }
 
@@ -175,6 +237,14 @@ struct DreamingStatsView: View {
         let cal = Calendar.current
         let comps = DateComponents(year: cal.component(.year, from: date), month: 1, day: 1)
         return cal.date(from: comps)!
+    }
+
+    // MARK: - Initial Hours
+
+    private var initialHours: Double {
+        externalTimes
+            .filter { $0.type == "initial" }
+            .reduce(0.0) { $0 + $1.timeSeconds } / 3600.0
     }
 
     // MARK: - Filtered Data

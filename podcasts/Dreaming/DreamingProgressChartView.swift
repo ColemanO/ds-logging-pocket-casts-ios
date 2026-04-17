@@ -6,6 +6,7 @@ struct DreamingProgressChartView: View {
     let dataPoints: [DataPoint]
     let allDataPoints: [DataPoint]
     let levelThresholds: [(level: Int, hours: Double)]
+    let initialHours: Double
 
     struct DataPoint: Identifiable {
         let id = UUID()
@@ -180,10 +181,19 @@ struct DreamingProgressChartView: View {
                 // Find this point in the full dataset to get the previous day's cumulative
                 if let allIndex = allDataPoints.firstIndex(where: { $0.date == points[0].date }), allIndex > 0 {
                     total += points[0].cumulativeHours - allDataPoints[allIndex - 1].cumulativeHours
+                } else {
+                    // First data point in the full dataset — subtract initial baseline to get just this day's hours
+                    total += points[0].cumulativeHours - initialHours
                 }
             } else {
                 total += points[i].cumulativeHours - points[i - 1].cumulativeHours
             }
+        }
+        // Add initial hours so the total reflects all input including pre-DS baseline
+        if let firstAll = allDataPoints.first,
+           let firstFiltered = points.first,
+           firstAll.date == firstFiltered.date {
+            total += initialHours
         }
         return total
     }
