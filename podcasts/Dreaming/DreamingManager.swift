@@ -135,7 +135,7 @@ class DreamingManager {
         if episodes.count == 1, let episode = episodes.first {
             let podcastTitle: String?
             if let ep = episode as? Episode {
-                podcastTitle = DataManager.sharedManager.findPodcast(uuid: ep.podcastUuid)?.title
+                podcastTitle = ep.parentPodcast()?.title
             } else {
                 podcastTitle = nil
             }
@@ -153,7 +153,7 @@ class DreamingManager {
         for (podcastUuid, groupEpisodes) in grouped {
             let podcastTitle: String?
             if podcastUuid != "user-episodes" {
-                podcastTitle = DataManager.sharedManager.findPodcast(uuid: podcastUuid)?.title
+                podcastTitle = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)?.title
             } else {
                 podcastTitle = nil
             }
