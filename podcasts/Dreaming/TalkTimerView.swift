@@ -14,6 +14,8 @@ struct TalkTimerView: View {
         static let state = "TalkTimerState"
     }
 
+    @EnvironmentObject var theme: Theme
+
     @State private var timerState: TimerState = .idle
     @State private var accumulatedSeconds: Double = 0
     @State private var startTime: Date?
@@ -28,13 +30,18 @@ struct TalkTimerView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 32) {
-                Spacer()
-                timerDisplay
-                controls
-                Spacer()
+            ZStack {
+                theme.primaryUi01
+                    .ignoresSafeArea()
+
+                VStack(spacing: 40) {
+                    Spacer()
+                    timerDisplay
+                    controls
+                    Spacer()
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle(L10n.talk)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -42,9 +49,11 @@ struct TalkTimerView: View {
                     Button(L10n.close) {
                         dismiss()
                     }
+                    .foregroundColor(theme.primaryInteractive01)
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .onAppear(perform: restoreState)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             restoreState()
@@ -54,6 +63,7 @@ struct TalkTimerView: View {
                 onLogged?()
                 dismiss()
             }
+            .environmentObject(theme)
         }
     }
 
@@ -63,30 +73,31 @@ struct TalkTimerView: View {
         Text(formatTime(displaySeconds))
             .font(.system(size: 72, weight: .light, design: .monospaced))
             .monospacedDigit()
+            .foregroundColor(theme.primaryText01)
     }
 
     // MARK: - Controls
 
     private var controls: some View {
-        HStack(spacing: 40) {
+        HStack(spacing: 32) {
             switch timerState {
             case .idle:
                 Button(action: start) {
-                    timerButton(label: L10n.talkStart, color: .green)
+                    timerButton(label: L10n.talkStart, color: theme.support02)
                 }
             case .running:
                 Button(action: pause) {
                     timerButton(label: L10n.talkPause, color: .orange)
                 }
                 Button(action: stop) {
-                    timerButton(label: L10n.talkStop, color: .red)
+                    timerButton(label: L10n.talkStop, color: theme.support05)
                 }
             case .paused:
                 Button(action: resume) {
-                    timerButton(label: L10n.talkResume, color: .green)
+                    timerButton(label: L10n.talkResume, color: theme.support02)
                 }
                 Button(action: stop) {
-                    timerButton(label: L10n.talkStop, color: .red)
+                    timerButton(label: L10n.talkStop, color: theme.support05)
                 }
             }
         }
@@ -95,13 +106,14 @@ struct TalkTimerView: View {
     private func timerButton(label: String, color: Color) -> some View {
         Circle()
             .fill(color)
-            .frame(width: 72, height: 72)
+            .frame(width: 80, height: 80)
             .overlay(
                 Text(label)
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
             )
+            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
     }
 
     // MARK: - Timer Actions

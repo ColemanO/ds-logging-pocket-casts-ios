@@ -154,6 +154,21 @@ public class DateFormatHelper: NSObject {
         return jsonDateFormatter.date(from: string)
     }
 
+    // MARK: - Day yyyy-MM-dd
+
+    private lazy var dayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    public func dayDate(_ string: String?) -> Date? {
+        guard let string = string else { return nil }
+
+        return dayDateFormatter.date(from: string)
+    }
+
     // MARK: - HTTP
 
     private lazy var httpDateFormatter: DateFormatter = {

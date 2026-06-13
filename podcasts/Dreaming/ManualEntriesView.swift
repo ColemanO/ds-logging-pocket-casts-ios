@@ -1,6 +1,9 @@
+import PocketCastsUtils
 import SwiftUI
 
 struct ManualEntriesView: View {
+    @EnvironmentObject var theme: Theme
+
     @State private var entries: [DreamingManager.ExternalTimeEntry] = []
     @State private var showTimer = false
     @State private var showManualEntry = false
@@ -8,20 +11,27 @@ struct ManualEntriesView: View {
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
+                theme.primaryUi01
+                    .ignoresSafeArea()
+
                 entriesScrollView
+
                 floatingButtonBar
             }
             .navigationTitle("Manual Entries")
         }
+        .navigationViewStyle(.stack)
         .onAppear(perform: loadEntries)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             loadEntries()
         }
         .sheet(isPresented: $showTimer) {
             TalkTimerView(onLogged: loadEntries)
+                .environmentObject(theme)
         }
         .sheet(isPresented: $showManualEntry) {
             TalkSessionSummaryView(onLogged: loadEntries)
+                .environmentObject(theme)
         }
     }
 
@@ -37,9 +47,11 @@ struct ManualEntriesView: View {
                     ForEach(entries, id: \.id) { entry in
                         entryRow(entry)
                         Divider()
+                            .background(theme.primaryUi05)
                     }
                 }
                 .padding(.horizontal)
+                .padding(.top, 8)
                 .padding(.bottom, 100) // room for the floating bar
             }
         }
@@ -49,9 +61,10 @@ struct ManualEntriesView: View {
         VStack(spacing: 8) {
             Text("No manual entries yet")
                 .font(.headline)
+                .foregroundColor(theme.primaryText01)
             Text("Tap a button below to log a session")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.primaryText02)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.bottom, 100)
@@ -62,37 +75,29 @@ struct ManualEntriesView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.description)
                     .font(.subheadline)
+                    .foregroundColor(theme.primaryText01)
                     .lineLimit(1)
-                Text(entry.date)
+                Text(formatDate(entry.date))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(theme.primaryText02)
             }
             Spacer()
             Text(formatDurationShort(entry.timeSeconds))
                 .font(.subheadline)
                 .monospacedDigit()
-                .foregroundColor(.secondary)
+                .foregroundColor(theme.primaryText02)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Floating Buttons
 
     private var floatingButtonBar: some View {
         HStack(spacing: 12) {
-            floatingButton(
-                label: "Timer",
-                systemImage: "timer",
-                color: .accentColor
-            ) {
+            floatingButton(label: "Timer", systemImage: "timer") {
                 showTimer = true
             }
-
-            floatingButton(
-                label: "Manual",
-                systemImage: "plus.circle.fill",
-                color: .accentColor
-            ) {
+            floatingButton(label: "Manual", systemImage: "plus.circle.fill") {
                 showManualEntry = true
             }
         }
@@ -100,17 +105,17 @@ struct ManualEntriesView: View {
         .padding(.bottom, 12)
     }
 
-    private func floatingButton(label: String, systemImage: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func floatingButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: systemImage)
                 Text(label)
                     .fontWeight(.semibold)
             }
-            .foregroundColor(.white)
+            .foregroundColor(theme.primaryUi01)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(color)
+            .background(theme.primaryInteractive01)
             .clipShape(Capsule())
             .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
         }
@@ -147,10 +152,19 @@ struct ManualEntriesView: View {
 
     // MARK: - Formatting
 
+    private func formatDate(_ dateString: String) -> String {
+        guard let date = DateFormatHelper.sharedHelper.dayDate(dateString) else { return dateString }
+        return DateFormatHelper.sharedHelper.tinyLocalizedFormat(date)
+    }
+
     private func formatDurationShort(_ totalSeconds: Double) -> String {
         let total = Int(totalSeconds)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%dm %ds", minutes, seconds)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        if hours > 0 {
+            return String(format: "%dh %dm", hours, minutes)
+        } else {
+            return String(format: "%dm", minutes)
+        }
     }
 }
