@@ -171,6 +171,8 @@ extension EpisodeDetailViewController {
     }
 
     func updateMessageView() {
+        isShowingDreamingLogError = false
+
         if episode.playbackError() {
             setMessage(title: L10n.playbackFailed, details: episode.playbackErrorDetails ?? L10n.podcastDetailsPlaybackError, imageName: "option-alert")
         } else if episode.downloadFailed() {
@@ -181,10 +183,35 @@ extension EpisodeDetailViewController {
             setMessage(title: L10n.podcastDetailsManualUnarchiveTitle,
                        details: L10n.podcastDetailsManualUnarchiveMsg(podcast.autoArchiveEpisodeLimitCount.localized()),
                        imageName: "episode-archive")
+        } else if DreamingManager.shared.logStatus(for: episode.uuid) == .failure {
+            isShowingDreamingLogError = true
+            setMessage(title: "Dreaming log failed", details: "Tap to view error details", imageName: "option-alert")
         } else if buttonBottomOffsetConstraint.constant != 20 {
             messageView.isHidden = true
             buttonBottomOffsetConstraint.constant = 20
         }
+    }
+
+    @objc func messageViewTapped() {
+        guard isShowingDreamingLogError else { return }
+
+        let error = DreamingManager.shared.logError(for: episode.uuid)
+        let statusCode = error.map { $0.statusCode == -1 ? "Network error" : "HTTP \($0.statusCode)" } ?? "Unknown"
+        let message = error?.message ?? "No error details stored."
+        let dateString: String
+        if let date = error?.date {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
+            formatter.timeStyle = .medium
+            dateString = formatter.string(from: date)
+        } else {
+            dateString = "—"
+        }
+
+        let body = "Status: \(statusCode)\nWhen: \(dateString)\n\n\(message)"
+        let alert = UIAlertController(title: "Dreaming log error", message: body, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.ok, style: .default))
+        present(alert, animated: true)
     }
 
     private func setMessage(title: String, details: String, imageName: String) {

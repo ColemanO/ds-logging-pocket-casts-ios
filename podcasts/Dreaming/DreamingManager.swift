@@ -7,11 +7,18 @@ class DreamingManager {
 
     private let keychainKey = "dreamingBearerToken"
     private let statusDefaultsKey = "DreamingEpisodeLogStatus"
+    private let errorDefaultsKey = "DreamingEpisodeLogErrors"
 
     enum LogStatus: String {
         case pending
         case success
         case failure
+    }
+
+    struct LogError {
+        let statusCode: Int
+        let message: String
+        let date: Date
     }
 
     struct ExternalTimeEntry {
@@ -93,6 +100,31 @@ class DreamingManager {
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: Constants.Notifications.dreamingLogStatusChanged, object: episodeUuid)
         }
+    }
+
+    func logError(for episodeUuid: String) -> LogError? {
+        guard let dict = UserDefaults.standard.dictionary(forKey: errorDefaultsKey),
+              let entry = dict[episodeUuid] as? [String: Any],
+              let statusCode = entry["statusCode"] as? Int,
+              let message = entry["message"] as? String,
+              let timestamp = entry["timestamp"] as? Double else {
+            return nil
+        }
+        return LogError(statusCode: statusCode, message: message, date: Date(timeIntervalSince1970: timestamp))
+    }
+
+    private func setLogError(_ error: LogError?, for episodeUuid: String) {
+        var dict = UserDefaults.standard.dictionary(forKey: errorDefaultsKey) ?? [:]
+        if let error = error {
+            dict[episodeUuid] = [
+                "statusCode": error.statusCode,
+                "message": error.message,
+                "timestamp": error.date.timeIntervalSince1970
+            ]
+        } else {
+            dict.removeValue(forKey: episodeUuid)
+        }
+        UserDefaults.standard.set(dict, forKey: errorDefaultsKey)
     }
 
     // MARK: - API Logging
@@ -184,6 +216,7 @@ class DreamingManager {
             "description": description,
             "type": "listening",
             "date": dateString,
+            "today": dateString,
             "idempotencyKey": idempotencyKey,
             "externalVideoUrl": ""
         ]
@@ -191,6 +224,7 @@ class DreamingManager {
         guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/externalTime?language=es"),
               let jsonData = try? JSONSerialization.data(withJSONObject: body) else {
             FileLog.shared.addMessage("Dreaming: Failed to create request")
+            setLogError(LogError(statusCode: -1, message: "Failed to create request", date: Date()), for: episodeUuid)
             setLogStatus(.failure, for: episodeUuid)
             return
         }
@@ -201,19 +235,24 @@ class DreamingManager {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error = error {
                 FileLog.shared.addMessage("Dreaming: Failed to log episode - \(error.localizedDescription)")
+                self?.setLogError(LogError(statusCode: -1, message: error.localizedDescription, date: Date()), for: episodeUuid)
                 self?.setLogStatus(.failure, for: episodeUuid)
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse, (200 ..< 300).contains(httpResponse.statusCode) {
                 FileLog.shared.addMessage("Dreaming: Successfully logged episode \(episodeUuid)")
+                self?.setLogError(nil, for: episodeUuid)
                 self?.setLogStatus(.success, for: episodeUuid)
             } else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
                 FileLog.shared.addMessage("Dreaming: Failed to log episode, status code: \(statusCode)")
+                let message = body.isEmpty ? "HTTP \(statusCode)" : body
+                self?.setLogError(LogError(statusCode: statusCode, message: message, date: Date()), for: episodeUuid)
                 self?.setLogStatus(.failure, for: episodeUuid)
             }
         }.resume()
@@ -576,6 +615,7 @@ class DreamingManager {
             "description": description,
             "type": "listening",
             "date": dateString,
+            "today": dateString,
             "idempotencyKey": idempotencyKey,
             "externalVideoUrl": ""
         ]
@@ -583,6 +623,7 @@ class DreamingManager {
         guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/externalTime?language=es"),
               let jsonData = try? JSONSerialization.data(withJSONObject: body) else {
             FileLog.shared.addMessage("Dreaming: Failed to create request")
+            setLogError(LogError(statusCode: -1, message: "Failed to create request", date: Date()), for: episodeUuid)
             setLogStatus(.failure, for: episodeUuid)
             return
         }
@@ -593,19 +634,24 @@ class DreamingManager {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error = error {
                 FileLog.shared.addMessage("Dreaming: Failed to log episode - \(error.localizedDescription)")
+                self?.setLogError(LogError(statusCode: -1, message: error.localizedDescription, date: Date()), for: episodeUuid)
                 self?.setLogStatus(.failure, for: episodeUuid)
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse, (200 ..< 300).contains(httpResponse.statusCode) {
                 FileLog.shared.addMessage("Dreaming: Successfully logged episode \(episodeUuid)")
+                self?.setLogError(nil, for: episodeUuid)
                 self?.setLogStatus(.success, for: episodeUuid)
             } else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
                 FileLog.shared.addMessage("Dreaming: Failed to log episode, status code: \(statusCode)")
+                let message = body.isEmpty ? "HTTP \(statusCode)" : body
+                self?.setLogError(LogError(statusCode: statusCode, message: message, date: Date()), for: episodeUuid)
                 self?.setLogStatus(.failure, for: episodeUuid)
             }
         }.resume()
@@ -623,6 +669,7 @@ class DreamingManager {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: date)
+        let todayString = dateFormatter.string(from: Date())
 
         let timestamp = Int(Date().timeIntervalSince1970)
         let idempotencyKey = UUID().uuidString
@@ -633,6 +680,7 @@ class DreamingManager {
             "description": description,
             "type": "talking",
             "date": dateString,
+            "today": todayString,
             "idempotencyKey": idempotencyKey,
             "externalVideoUrl": ""
         ]
