@@ -1,31 +1,70 @@
 import PocketCastsUtils
 import SwiftUI
+import UIKit
+
+/// Bridges the UIKit bar-button menu (in `ManualEntriesViewController`) to the
+/// SwiftUI sheet presentations in `ManualEntriesView`.
+final class ManualEntriesCoordinator: ObservableObject {
+    @Published var showTimer = false
+    @Published var showManualEntry = false
+}
+
+/// Hosts `ManualEntriesView` and adds a right-bar "+" button with a menu of
+/// entry options (Timer, Manual). The menu drives the coordinator, which the
+/// SwiftUI view observes to present the appropriate sheet.
+final class ManualEntriesViewController: ThemedHostingController<ManualEntriesView> {
+    private let coordinator: ManualEntriesCoordinator
+
+    init() {
+        let coordinator = ManualEntriesCoordinator()
+        self.coordinator = coordinator
+        super.init(rootView: ManualEntriesView(coordinator: coordinator), background: \.primaryUi01)
+        title = "Manual Entries"
+    }
+
+    @MainActor required dynamic init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupAddButton()
+    }
+
+    private func setupAddButton() {
+        let timerAction = UIAction(title: "Timer", image: UIImage(systemName: "timer")) { [weak self] _ in
+            self?.coordinator.showTimer = true
+        }
+        let manualAction = UIAction(title: "Manual", image: UIImage(systemName: "square.and.pencil")) { [weak self] _ in
+            self?.coordinator.showManualEntry = true
+        }
+        let menu = UIMenu(children: [timerAction, manualAction])
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), menu: menu)
+    }
+}
 
 struct ManualEntriesView: View {
     @EnvironmentObject var theme: Theme
+    @ObservedObject var coordinator: ManualEntriesCoordinator
 
     @State private var entries: [DreamingManager.ExternalTimeEntry] = []
-    @State private var showTimer = false
-    @State private var showManualEntry = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             theme.primaryUi01
                 .ignoresSafeArea()
 
             entriesScrollView
-
-            floatingButtonBar
         }
         .onAppear(perform: loadEntries)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             loadEntries()
         }
-        .sheet(isPresented: $showTimer) {
+        .sheet(isPresented: $coordinator.showTimer) {
             TalkTimerView(onLogged: loadEntries)
                 .environmentObject(theme)
         }
-        .sheet(isPresented: $showManualEntry) {
+        .sheet(isPresented: $coordinator.showManualEntry) {
             TalkSessionSummaryView(onLogged: loadEntries)
                 .environmentObject(theme)
         }
@@ -48,7 +87,6 @@ struct ManualEntriesView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
-                .padding(.bottom, 100) // room for the floating bar
             }
         }
     }
@@ -58,12 +96,11 @@ struct ManualEntriesView: View {
             Text("No manual entries yet")
                 .font(.headline)
                 .foregroundColor(theme.primaryText01)
-            Text("Tap a button below to log a session")
+            Text("Tap + in the top right to log a session")
                 .font(.subheadline)
                 .foregroundColor(theme.primaryText02)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.bottom, 100)
     }
 
     private func entryRow(_ entry: DreamingManager.ExternalTimeEntry) -> some View {
@@ -84,37 +121,6 @@ struct ManualEntriesView: View {
                 .foregroundColor(theme.primaryText02)
         }
         .padding(.vertical, 12)
-    }
-
-    // MARK: - Floating Buttons
-
-    private var floatingButtonBar: some View {
-        HStack(spacing: 12) {
-            floatingButton(label: "Timer", systemImage: "timer") {
-                showTimer = true
-            }
-            floatingButton(label: "Manual", systemImage: "plus.circle.fill") {
-                showManualEntry = true
-            }
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 12)
-    }
-
-    private func floatingButton(label: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: systemImage)
-                Text(label)
-                    .fontWeight(.semibold)
-            }
-            .foregroundColor(theme.primaryUi01)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(theme.primaryInteractive01)
-            .clipShape(Capsule())
-            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
-        }
     }
 
     // MARK: - Data Loading
