@@ -67,7 +67,7 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         let profileViewController = ProfileViewController()
         profileViewController.tabBarItem = profileTabBarItem
 
-        let talkViewController = UIHostingController(rootView: TalkTimerView())
+        let talkViewController = UIHostingController(rootView: ManualEntriesView())
         talkViewController.tabBarItem = UITabBarItem(title: L10n.talk, image: UIImage(systemName: "mic.fill"), tag: pcTabs.firstIndex(of: .talk)!)
 
         let dreamingViewController = DreamingProgressViewController()

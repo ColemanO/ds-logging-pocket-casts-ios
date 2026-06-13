@@ -20,30 +20,39 @@ struct TalkTimerView: View {
     @State private var displaySeconds: Double = 0
     @State private var showSummary = false
     @State private var summaryDuration: Double?
-    @State private var recentSessions: [DreamingManager.ExternalTimeEntry] = []
-    @State private var timer: Publishers.Autoconnect<Timer.TimerPublisher>?
     @State private var timerCancellable: AnyCancellable?
 
+    @Environment(\.dismiss) private var dismiss
+
+    var onLogged: (() -> Void)? = nil
+
     var body: some View {
-        ScrollView {
+        NavigationView {
             VStack(spacing: 32) {
+                Spacer()
                 timerDisplay
                 controls
-                logManuallyButton
-                recentSessionsSection
+                Spacer()
             }
             .padding()
+            .navigationTitle(L10n.talk)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L10n.close) {
+                        dismiss()
+                    }
+                }
+            }
         }
-        .onAppear {
-            restoreState()
-            loadRecentSessions()
-        }
+        .onAppear(perform: restoreState)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             restoreState()
         }
         .sheet(isPresented: $showSummary) {
             TalkSessionSummaryView(durationSeconds: summaryDuration) {
-                loadRecentSessions()
+                onLogged?()
+                dismiss()
             }
         }
     }
@@ -52,9 +61,8 @@ struct TalkTimerView: View {
 
     private var timerDisplay: some View {
         Text(formatTime(displaySeconds))
-            .font(.system(size: 64, weight: .light, design: .monospaced))
+            .font(.system(size: 72, weight: .light, design: .monospaced))
             .monospacedDigit()
-            .padding(.top, 40)
     }
 
     // MARK: - Controls
@@ -85,65 +93,15 @@ struct TalkTimerView: View {
     }
 
     private func timerButton(label: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Text(label)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                )
-        }
-    }
-
-    // MARK: - Log Manually
-
-    private var logManuallyButton: some View {
-        Button(action: {
-            summaryDuration = nil
-            showSummary = true
-        }) {
-            Text(L10n.talkLogManually)
-                .font(.body)
-                .foregroundColor(.accentColor)
-        }
-    }
-
-    // MARK: - Recent Sessions
-
-    private var recentSessionsSection: some View {
-        Group {
-            if !recentSessions.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(L10n.talkRecentSessions)
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    ForEach(recentSessions, id: \.id) { session in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(session.description)
-                                    .font(.subheadline)
-                                    .lineLimit(1)
-                                Text(session.date)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Text(formatDurationShort(session.timeSeconds))
-                                .font(.subheadline)
-                                .monospacedDigit()
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                        Divider()
-                    }
-                }
-                .padding(.top, 8)
-            }
-        }
+        Circle()
+            .fill(color)
+            .frame(width: 72, height: 72)
+            .overlay(
+                Text(label)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+            )
     }
 
     // MARK: - Timer Actions
@@ -264,30 +222,6 @@ struct TalkTimerView: View {
         }
     }
 
-    // MARK: - Data Loading
-
-    private func loadRecentSessions() {
-        if let cached = DreamingManager.shared.cachedExternalTimes {
-            recentSessions = filterAndSortSessions(cached)
-        } else {
-            DreamingManager.shared.fetchExternalTimes { entries in
-                DispatchQueue.main.async {
-                    if let entries = entries {
-                        recentSessions = filterAndSortSessions(entries)
-                    }
-                }
-            }
-        }
-    }
-
-    private func filterAndSortSessions(_ entries: [DreamingManager.ExternalTimeEntry]) -> [DreamingManager.ExternalTimeEntry] {
-        entries
-            .filter { $0.type == "talking" }
-            .sorted { $0.date > $1.date }
-            .prefix(10)
-            .map { $0 }
-    }
-
     // MARK: - Formatting
 
     private func formatTime(_ totalSeconds: Double) -> String {
@@ -301,12 +235,5 @@ struct TalkTimerView: View {
         } else {
             return String(format: "%02d:%02d", minutes, seconds)
         }
-    }
-
-    private func formatDurationShort(_ totalSeconds: Double) -> String {
-        let total = Int(totalSeconds)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%dm %ds", minutes, seconds)
     }
 }
