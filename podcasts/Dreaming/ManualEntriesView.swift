@@ -9,18 +9,14 @@ struct ManualEntriesView: View {
     @State private var showManualEntry = false
 
     var body: some View {
-        NavigationView {
-            ZStack(alignment: .bottom) {
-                theme.primaryUi01
-                    .ignoresSafeArea()
+        ZStack(alignment: .bottom) {
+            theme.primaryUi01
+                .ignoresSafeArea()
 
-                entriesScrollView
+            entriesScrollView
 
-                floatingButtonBar
-            }
-            .navigationTitle("Manual Entries")
+            floatingButtonBar
         }
-        .navigationViewStyle(.stack)
         .onAppear(perform: loadEntries)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             loadEntries()
