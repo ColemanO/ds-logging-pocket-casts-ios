@@ -4169,8 +4169,6 @@ internal enum L10n {
   internal static var syncing: String { return L10n.tr("Localizable", "syncing", fallback: "Syncing...") }
   /// Talk tab title
   internal static var talk: String { return L10n.tr("Localizable", "talk", fallback: "Talk") }
-  /// Default description for a crosstalk session
-  internal static var talkCrosstalkSession: String { return L10n.tr("Localizable", "talk_crosstalk_session", fallback: "Crosstalk session") }
   /// Date section header
   internal static var talkDate: String { return L10n.tr("Localizable", "talk_date", fallback: "Date") }
   /// Description section header
@@ -4187,8 +4185,6 @@ internal enum L10n {
   internal static var talkLogManually: String { return L10n.tr("Localizable", "talk_log_manually", fallback: "Log Manually") }
   /// Navigation title for the log session summary screen
   internal static var talkLogSession: String { return L10n.tr("Localizable", "talk_log_session", fallback: "Log Session") }
-  /// Default description for an output session
-  internal static var talkOutputSession: String { return L10n.tr("Localizable", "talk_output_session", fallback: "Output session") }
   /// Pause button for talk timer
   internal static var talkPause: String { return L10n.tr("Localizable", "talk_pause", fallback: "Pause") }
   /// Header for recent talk sessions list

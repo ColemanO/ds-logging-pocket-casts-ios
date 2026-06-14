@@ -5890,12 +5890,6 @@
 /* Talk type: output */
 "talk_type_output" = "Output";
 
-/* Default description for a crosstalk session */
-"talk_crosstalk_session" = "Crosstalk session";
-
-/* Default description for an output session */
-"talk_output_session" = "Output session";
-
 /* Discard button on talk session summary */
 "talk_discard" = "Discard";
 
