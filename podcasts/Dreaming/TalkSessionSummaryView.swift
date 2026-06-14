@@ -1,17 +1,28 @@
 import SwiftUI
 
 struct TalkSessionSummaryView: View {
-    enum TalkType: String, CaseIterable {
-        case crosstalk
-        case output
+    private enum PrimaryType: String, CaseIterable, Identifiable {
+        case watching
+        case talking
+        var id: String { rawValue }
+
+        var displayName: String {
+            switch self {
+            case .watching: return L10n.primaryTypeWatching
+            case .talking:  return L10n.primaryTypeTalking
+            }
+        }
     }
 
     @EnvironmentObject var theme: Theme
 
     @State private var minutes: String
     @State private var seconds: String
-    @State private var talkType: TalkType = .crosstalk
-    @State private var descriptionText: String = L10n.talkCrosstalkSession
+    @State private var primaryType: PrimaryType
+    @State private var subType: TalkingSubType
+    @State private var watchingSource: String
+    @State private var watchingTitle: String
+    @State private var talkingUserDescription: String
     @State private var date: Date = Date()
     @State private var isLogging: Bool = false
     @State private var showError: Bool = false
@@ -20,8 +31,9 @@ struct TalkSessionSummaryView: View {
 
     private let onLogged: (() -> Void)?
 
-    init(durationSeconds: Double? = nil, onLogged: (() -> Void)? = nil) {
+    init(durationSeconds: Double? = nil, initialKind: ManualEntryKind? = nil, onLogged: (() -> Void)? = nil) {
         self.onLogged = onLogged
+
         if let duration = durationSeconds {
             let totalSeconds = Int(duration)
             _minutes = State(initialValue: "\(totalSeconds / 60)")
@@ -29,6 +41,28 @@ struct TalkSessionSummaryView: View {
         } else {
             _minutes = State(initialValue: "")
             _seconds = State(initialValue: "0")
+        }
+
+        // Populate type-specific fields from initialKind if provided.
+        switch initialKind {
+        case .watching(let source, let title):
+            _primaryType = State(initialValue: .watching)
+            _subType = State(initialValue: .talking)
+            _watchingSource = State(initialValue: source)
+            _watchingTitle = State(initialValue: title)
+            _talkingUserDescription = State(initialValue: "")
+        case .talking(let subType, let userDescription):
+            _primaryType = State(initialValue: .talking)
+            _subType = State(initialValue: subType)
+            _watchingSource = State(initialValue: "")
+            _watchingTitle = State(initialValue: "")
+            _talkingUserDescription = State(initialValue: userDescription ?? "")
+        case .none:
+            _primaryType = State(initialValue: .talking)
+            _subType = State(initialValue: .talking)
+            _watchingSource = State(initialValue: "")
+            _watchingTitle = State(initialValue: "")
+            _talkingUserDescription = State(initialValue: "")
         }
     }
 
@@ -38,91 +72,24 @@ struct TalkSessionSummaryView: View {
         return m * 60 + s
     }
 
+    private var kind: ManualEntryKind {
+        switch primaryType {
+        case .watching:
+            return .watching(source: watchingSource, title: watchingTitle)
+        case .talking:
+            let trimmed = talkingUserDescription.trimmingCharacters(in: .whitespaces)
+            return .talking(subType: subType, userDescription: trimmed.isEmpty ? nil : trimmed)
+        }
+    }
+
     var body: some View {
         NavigationView {
             Form {
-                Section {
-                    HStack {
-                        TextField("min", text: $minutes)
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                            .foregroundColor(theme.primaryText01)
-                        Text("m")
-                            .foregroundColor(theme.primaryText02)
-                        TextField("sec", text: $seconds)
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                            .foregroundColor(theme.primaryText01)
-                        Text("s")
-                            .foregroundColor(theme.primaryText02)
-                    }
-                } header: {
-                    Text(L10n.talkDuration)
-                        .foregroundColor(theme.primaryText02)
-                }
-                .listRowBackground(theme.primaryUi02)
-
-                Section {
-                    Picker(L10n.talkType, selection: $talkType) {
-                        Text(L10n.talkTypeCrosstalk).tag(TalkType.crosstalk)
-                        Text(L10n.talkTypeOutput).tag(TalkType.output)
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: talkType) { newValue in
-                        switch newValue {
-                        case .crosstalk:
-                            descriptionText = L10n.talkCrosstalkSession
-                        case .output:
-                            descriptionText = L10n.talkOutputSession
-                        }
-                    }
-                } header: {
-                    Text(L10n.talkType)
-                        .foregroundColor(theme.primaryText02)
-                }
-                .listRowBackground(theme.primaryUi02)
-
-                Section {
-                    TextField(L10n.talkDescription, text: $descriptionText)
-                        .foregroundColor(theme.primaryText01)
-                } header: {
-                    Text(L10n.talkDescription)
-                        .foregroundColor(theme.primaryText02)
-                }
-                .listRowBackground(theme.primaryUi02)
-
-                Section {
-                    DatePicker(L10n.talkDate, selection: $date, displayedComponents: .date)
-                        .foregroundColor(theme.primaryText01)
-                } header: {
-                    Text(L10n.talkDate)
-                        .foregroundColor(theme.primaryText02)
-                }
-                .listRowBackground(theme.primaryUi02)
-
-                Section {
-                    Button(action: logSession) {
-                        HStack {
-                            if isLogging {
-                                ProgressView()
-                                    .tint(theme.primaryInteractive01)
-                            }
-                            Text(L10n.talkLog)
-                                .foregroundColor(theme.primaryInteractive01)
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .disabled(isLogging || totalSeconds <= 0)
-
-                    Button(action: { dismiss() }) {
-                        Text(L10n.talkDiscard)
-                            .foregroundColor(theme.support05)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .disabled(isLogging)
-                }
-                .listRowBackground(theme.primaryUi02)
+                durationSection
+                typeSection
+                conditionalFieldsSection
+                dateSection
+                buttonsSection
             }
             .scrollContentBackground(.hidden)
             .background(theme.primaryUi01)
@@ -135,11 +102,124 @@ struct TalkSessionSummaryView: View {
         .navigationViewStyle(.stack)
     }
 
+    // MARK: - Sections
+
+    private var durationSection: some View {
+        Section {
+            HStack {
+                TextField("min", text: $minutes)
+                    .keyboardType(.numberPad)
+                    .frame(width: 60)
+                    .foregroundColor(theme.primaryText01)
+                Text("m")
+                    .foregroundColor(theme.primaryText02)
+                TextField("sec", text: $seconds)
+                    .keyboardType(.numberPad)
+                    .frame(width: 60)
+                    .foregroundColor(theme.primaryText01)
+                Text("s")
+                    .foregroundColor(theme.primaryText02)
+            }
+        } header: {
+            Text(L10n.talkDuration)
+                .foregroundColor(theme.primaryText02)
+        }
+        .listRowBackground(theme.primaryUi02)
+    }
+
+    private var typeSection: some View {
+        Section {
+            Picker(L10n.entryType, selection: $primaryType) {
+                ForEach(PrimaryType.allCases) { type in
+                    Text(type.displayName).tag(type)
+                }
+            }
+            .pickerStyle(.segmented)
+        } header: {
+            Text(L10n.entryType)
+                .foregroundColor(theme.primaryText02)
+        }
+        .listRowBackground(theme.primaryUi02)
+    }
+
+    @ViewBuilder
+    private var conditionalFieldsSection: some View {
+        switch primaryType {
+        case .watching:
+            Section {
+                TextField(L10n.watchingSource, text: $watchingSource)
+                    .foregroundColor(theme.primaryText01)
+                TextField(L10n.watchingTitle, text: $watchingTitle)
+                    .foregroundColor(theme.primaryText01)
+            } header: {
+                Text(L10n.primaryTypeWatching)
+                    .foregroundColor(theme.primaryText02)
+            }
+            .listRowBackground(theme.primaryUi02)
+
+        case .talking:
+            Section {
+                Picker(L10n.talkingSubType, selection: $subType) {
+                    Text(L10n.talkingSubTypeTalking).tag(TalkingSubType.talking)
+                    Text(L10n.talkTypeCrosstalk).tag(TalkingSubType.crosstalk)
+                    Text(L10n.talkingSubTypeReverseCrosstalk).tag(TalkingSubType.reverseCrosstalk)
+                }
+                .pickerStyle(.segmented)
+
+                TextField(L10n.talkingDescription, text: $talkingUserDescription)
+                    .foregroundColor(theme.primaryText01)
+            } header: {
+                Text(L10n.talkingSubType)
+                    .foregroundColor(theme.primaryText02)
+            }
+            .listRowBackground(theme.primaryUi02)
+        }
+    }
+
+    private var dateSection: some View {
+        Section {
+            DatePicker(L10n.talkDate, selection: $date, displayedComponents: .date)
+                .foregroundColor(theme.primaryText01)
+        } header: {
+            Text(L10n.talkDate)
+                .foregroundColor(theme.primaryText02)
+        }
+        .listRowBackground(theme.primaryUi02)
+    }
+
+    private var buttonsSection: some View {
+        Section {
+            Button(action: logSession) {
+                HStack {
+                    if isLogging {
+                        ProgressView()
+                            .tint(theme.primaryInteractive01)
+                    }
+                    Text(L10n.talkLog)
+                        .foregroundColor(theme.primaryInteractive01)
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .disabled(isLogging || totalSeconds <= 0 || kind.encodedDescription.isEmpty)
+
+            Button(action: { dismiss() }) {
+                Text(L10n.talkDiscard)
+                    .foregroundColor(theme.support05)
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(isLogging)
+        }
+        .listRowBackground(theme.primaryUi02)
+    }
+
+    // MARK: - Submission
+
     private func logSession() {
         isLogging = true
         DreamingManager.shared.logExternalEntry(
-            type: "talking",
-            description: descriptionText,
+            type: kind.apiType,
+            description: kind.encodedDescription,
             timeSeconds: totalSeconds,
             date: date
         ) { success in
