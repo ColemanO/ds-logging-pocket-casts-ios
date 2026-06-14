@@ -137,9 +137,10 @@ struct TalkSessionSummaryView: View {
 
     private func logSession() {
         isLogging = true
-        DreamingManager.shared.logTalkSession(
-            timeSeconds: totalSeconds,
+        DreamingManager.shared.logExternalEntry(
+            type: "talking",
             description: descriptionText,
+            timeSeconds: totalSeconds,
             date: date
         ) { success in
             isLogging = false

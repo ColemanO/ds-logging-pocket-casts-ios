@@ -657,11 +657,11 @@ class DreamingManager {
         }.resume()
     }
 
-    // MARK: - Talk Session Logging
+    // MARK: - Manual Entry Logging
 
-    func logTalkSession(timeSeconds: Double, description: String, date: Date, completion: @escaping (Bool) -> Void) {
+    func logExternalEntry(type: String, description: String, timeSeconds: Double, date: Date, completion: @escaping (Bool) -> Void) {
         guard let token = getToken() else {
-            FileLog.shared.addMessage("Dreaming: No token configured, skipping talk session log")
+            FileLog.shared.addMessage("Dreaming: No token configured, skipping external entry log")
             DispatchQueue.main.async { completion(false) }
             return
         }
@@ -675,10 +675,10 @@ class DreamingManager {
         let idempotencyKey = UUID().uuidString
 
         let body: [String: Any] = [
-            "id": "talk-\(timestamp)",
+            "id": "\(type)-\(timestamp)",
             "timeSeconds": timeSeconds,
             "description": description,
-            "type": "talking",
+            "type": type,
             "date": dateString,
             "today": todayString,
             "idempotencyKey": idempotencyKey,
@@ -687,7 +687,7 @@ class DreamingManager {
 
         guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/externalTime?language=es"),
               let jsonData = try? JSONSerialization.data(withJSONObject: body) else {
-            FileLog.shared.addMessage("Dreaming: Failed to create talk session request")
+            FileLog.shared.addMessage("Dreaming: Failed to create external entry request")
             DispatchQueue.main.async { completion(false) }
             return
         }
@@ -700,17 +700,17 @@ class DreamingManager {
 
         URLSession.shared.dataTask(with: request) { _, response, error in
             if let error = error {
-                FileLog.shared.addMessage("Dreaming: Failed to log talk session - \(error.localizedDescription)")
+                FileLog.shared.addMessage("Dreaming: Failed to log external entry - \(error.localizedDescription)")
                 DispatchQueue.main.async { completion(false) }
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse, (200 ..< 300).contains(httpResponse.statusCode) {
-                FileLog.shared.addMessage("Dreaming: Successfully logged talk session")
+                FileLog.shared.addMessage("Dreaming: Successfully logged external entry (\(type))")
                 DispatchQueue.main.async { completion(true) }
             } else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                FileLog.shared.addMessage("Dreaming: Failed to log talk session, status code: \(statusCode)")
+                FileLog.shared.addMessage("Dreaming: Failed to log external entry, status code: \(statusCode)")
                 DispatchQueue.main.async { completion(false) }
             }
         }.resume()
