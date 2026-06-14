@@ -82,13 +82,17 @@ struct ManualEntriesView: View {
     @ObservedObject var coordinator: ManualEntriesCoordinator
 
     @State private var entries: [DreamingManager.ExternalTimeEntry] = []
+    @State private var selectedCategory: EntryCategory = .all
 
     var body: some View {
         ZStack {
             theme.primaryUi01
                 .ignoresSafeArea()
 
-            entriesScrollView
+            VStack(spacing: 0) {
+                chipRow
+                entriesScrollView
+            }
         }
         .onAppear(perform: loadEntries)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -155,6 +159,35 @@ struct ManualEntriesView: View {
                 .foregroundColor(theme.primaryText02)
         }
         .padding(.vertical, 12)
+    }
+
+    // MARK: - Filter Chips
+
+    private var chipRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(EntryCategory.allCases) { category in
+                    categoryChip(category)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .background(theme.primaryUi01)
+    }
+
+    private func categoryChip(_ category: EntryCategory) -> some View {
+        let isSelected = selectedCategory == category
+        return Button(action: { selectedCategory = category }) {
+            Text(category.displayName)
+                .font(.subheadline.weight(.semibold))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .foregroundColor(isSelected ? theme.primaryUi01 : theme.primaryText01)
+                .background(isSelected ? theme.primaryInteractive01 : theme.primaryUi02)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Data Loading
