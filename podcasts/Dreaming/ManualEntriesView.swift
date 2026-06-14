@@ -2,6 +2,40 @@ import PocketCastsUtils
 import SwiftUI
 import UIKit
 
+/// Filter categories shown in the Activity tab chip row. Each case maps to a
+/// Dreaming Spanish `type` field except `.all`, which disables filtering.
+enum EntryCategory: String, CaseIterable, Identifiable {
+    case all
+    case podcasts    // DS type "listening"
+    case talking     // DS type "talking"
+    case watching    // DS type "watching"
+    case initial     // DS type "initial"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .all: return "All"
+        case .podcasts: return "Podcasts"
+        case .talking: return "Talking"
+        case .watching: return "Watching"
+        case .initial: return "Initial"
+        }
+    }
+
+    /// The Dreaming Spanish `type` field this category matches.
+    /// `nil` for `.all` (no filter applied).
+    var apiType: String? {
+        switch self {
+        case .all: return nil
+        case .podcasts: return "listening"
+        case .talking: return "talking"
+        case .watching: return "watching"
+        case .initial: return "initial"
+        }
+    }
+}
+
 /// Bridges the UIKit bar-button menu (in `ManualEntriesViewController`) to the
 /// SwiftUI sheet presentations in `ManualEntriesView`.
 final class ManualEntriesCoordinator: ObservableObject {
