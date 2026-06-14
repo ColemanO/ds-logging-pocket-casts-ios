@@ -5842,6 +5842,9 @@
 /* Talk tab title */
 "talk" = "Talk";
 
+/* Activity tab title */
+"activity" = "Activity";
+
 /* Button to manually log a talk session */
 "talk_log_manually" = "Log Manually";
 

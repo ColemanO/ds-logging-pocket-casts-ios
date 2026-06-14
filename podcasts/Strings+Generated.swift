@@ -154,6 +154,8 @@ internal enum L10n {
   internal static var accountWelcome: String { return L10n.tr("Localizable", "account_welcome", fallback: "Welcome to Pocket Casts!") }
   /// Welcome message presented after a user has signed up for Pocket Casts Plus
   internal static var accountWelcomePlus: String { return L10n.tr("Localizable", "account_welcome_plus", fallback: "Welcome to Pocket Casts Plus!") }
+  /// Activity tab title
+  internal static var activity: String { return L10n.tr("Localizable", "activity", fallback: "Activity") }
   /// Title for an action that allows a user to create a new bookmark
   internal static var addBookmark: String { return L10n.tr("Localizable", "add_bookmark", fallback: "Add Bookmark") }
   /// The subtitle of a view where the user can edit their bookmark title
