@@ -5845,6 +5845,36 @@
 /* Activity tab title */
 "activity" = "Activity";
 
+/* Entry type section header */
+"entry_type" = "Type";
+
+/* Primary type: Watching */
+"primary_type_watching" = "Watching";
+
+/* Primary type: Talking */
+"primary_type_talking" = "Talking";
+
+/* Talking sub-type picker section header */
+"talking_sub_type" = "Sub-type";
+
+/* Talking sub-type: Talking (output speech with no partner) */
+"talking_sub_type_talking" = "Talking";
+
+/* Talking sub-type: Reverse Crosstalk */
+"talking_sub_type_reverse_crosstalk" = "Reverse Crosstalk";
+
+/* Watching field: Source (creator, channel, series) */
+"watching_source" = "Source";
+
+/* Watching field: Title (video / episode) */
+"watching_title" = "Title";
+
+/* Talking field: optional user description */
+"talking_description" = "Description (optional)";
+
+/* Input-quality percentage label on the timer */
+"input_quality" = "Input quality";
+
 /* Button to manually log a talk session */
 "talk_log_manually" = "Log Manually";
 

@@ -996,6 +996,8 @@ internal enum L10n {
   internal static var editClip: String { return L10n.tr("Localizable", "edit_clip", fallback: "Edit clip") }
   /// Button label for a feature that the user can enable
   internal static var enableItNow: String { return L10n.tr("Localizable", "enable_it_now", fallback: "Enable it now") }
+  /// Entry type section header
+  internal static var entryType: String { return L10n.tr("Localizable", "entry_type", fallback: "Type") }
   /// Description shown on the final End of Year story for 2024
   internal static var eoy2024EpilogueDescription: String { return L10n.tr("Localizable", "eoy_2024_epilogue_description", fallback: "Don’t forget to share with friends and give a shout out to your favourite podcasts and creators.") }
   /// Title shown on the final End of Year story for 2024
@@ -1660,6 +1662,8 @@ internal enum L10n {
   internal static var importTitle: String { return L10n.tr("Localizable", "import_title", fallback: "Bring your\npodcasts with you") }
   /// A common string used throughout the app. Status message informing the user that the episode has been started but not finished.
   internal static var inProgress: String { return L10n.tr("Localizable", "in_progress", fallback: "In Progress") }
+  /// Input-quality percentage label on the timer
+  internal static var inputQuality: String { return L10n.tr("Localizable", "input_quality", fallback: "Input quality") }
   /// Interests screen button title for interests confirmation. The %1$@ argument is the minimum number of interests you need to select. Ex: Select at least 3
   internal static func interestsSelectAtLeast(_ p1: Any) -> String {
     return L10n.tr("Localizable", "interests_select_at_least", String(describing: p1), fallback: "Select at least %1$@")
@@ -3033,6 +3037,10 @@ internal enum L10n {
   internal static func pricingTermsAfterTrialLong(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "pricing_terms_after_trial_long", String(describing: p1), String(describing: p2), fallback: "Recurring payments will begin after your %1$@ free trial (%2$@)")
   }
+  /// Primary type: Talking
+  internal static var primaryTypeTalking: String { return L10n.tr("Localizable", "primary_type_talking", fallback: "Talking") }
+  /// Primary type: Watching
+  internal static var primaryTypeWatching: String { return L10n.tr("Localizable", "primary_type_watching", fallback: "Watching") }
   /// A common string used throughout the app. Refers to the Profile tab.
   internal static var profile: String { return L10n.tr("Localizable", "profile", fallback: "Profile") }
   /// Body of Plus promotional section
@@ -4197,6 +4205,14 @@ internal enum L10n {
   internal static var talkTypeCrosstalk: String { return L10n.tr("Localizable", "talk_type_crosstalk", fallback: "Crosstalk") }
   /// Talk type: output
   internal static var talkTypeOutput: String { return L10n.tr("Localizable", "talk_type_output", fallback: "Output") }
+  /// Talking field: optional user description
+  internal static var talkingDescription: String { return L10n.tr("Localizable", "talking_description", fallback: "Description (optional)") }
+  /// Talking sub-type picker section header
+  internal static var talkingSubType: String { return L10n.tr("Localizable", "talking_sub_type", fallback: "Sub-type") }
+  /// Talking sub-type: Reverse Crosstalk
+  internal static var talkingSubTypeReverseCrosstalk: String { return L10n.tr("Localizable", "talking_sub_type_reverse_crosstalk", fallback: "Reverse Crosstalk") }
+  /// Talking sub-type: Talking (output speech with no partner)
+  internal static var talkingSubTypeTalking: String { return L10n.tr("Localizable", "talking_sub_type_talking", fallback: "Talking") }
   /// Prompt to allow the user to review the Terms of Use.
   internal static var termsOfUse: String { return L10n.tr("Localizable", "terms_of_use", fallback: "Terms of Use") }
   /// Theme name for the Classic theme.
@@ -4417,6 +4433,10 @@ internal enum L10n {
   internal static var watchUpNextNoItemsSubtitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_subtitle", fallback: "You can queue episodes to play next from the episode details screen, or adding them on your phone.") }
   /// Title for the up next screen when a user has no episode queued up to play.
   internal static var watchUpNextNoItemsTitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_title", fallback: "Nothing in Up Next") }
+  /// Watching field: Source (creator, channel, series)
+  internal static var watchingSource: String { return L10n.tr("Localizable", "watching_source", fallback: "Source") }
+  /// Watching field: Title (video / episode)
+  internal static var watchingTitle: String { return L10n.tr("Localizable", "watching_title", fallback: "Title") }
   /// week
   internal static var week: String { return L10n.tr("Localizable", "week", fallback: "week") }
   /// Title of a button prompting the user find new podcasts in discover
