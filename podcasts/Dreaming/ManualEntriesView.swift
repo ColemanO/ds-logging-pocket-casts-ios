@@ -81,8 +81,12 @@ struct ManualEntriesView: View {
     @EnvironmentObject var theme: Theme
     @ObservedObject var coordinator: ManualEntriesCoordinator
 
-    @State private var entries: [DreamingManager.ExternalTimeEntry] = []
+    @State private var allEntries: [DreamingManager.ExternalTimeEntry] = []
     @State private var selectedCategory: EntryCategory = .all
+
+    private var displayedEntries: [DreamingManager.ExternalTimeEntry] {
+        filterAndSort(allEntries)
+    }
 
     var body: some View {
         ZStack {
@@ -112,12 +116,12 @@ struct ManualEntriesView: View {
 
     @ViewBuilder
     private var entriesScrollView: some View {
-        if entries.isEmpty {
+        if displayedEntries.isEmpty {
             emptyState
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(entries, id: \.id) { entry in
+                    ForEach(displayedEntries, id: \.id) { entry in
                         entryRow(entry)
                         Divider()
                             .background(theme.primaryUi05)
@@ -131,7 +135,7 @@ struct ManualEntriesView: View {
 
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Text("No manual entries yet")
+            Text(emptyStateTitle)
                 .font(.headline)
                 .foregroundColor(theme.primaryText01)
             Text("Tap + in the top right to log a session")
@@ -139,6 +143,15 @@ struct ManualEntriesView: View {
                 .foregroundColor(theme.primaryText02)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var emptyStateTitle: String {
+        switch selectedCategory {
+        case .all:
+            return "No entries yet"
+        default:
+            return "No \(selectedCategory.displayName.lowercased()) entries yet"
+        }
     }
 
     private func entryRow(_ entry: DreamingManager.ExternalTimeEntry) -> some View {
@@ -194,12 +207,12 @@ struct ManualEntriesView: View {
 
     private func loadEntries() {
         if let cached = DreamingManager.shared.cachedExternalTimes {
-            entries = filterAndSort(cached)
+            allEntries = cached
         } else {
             DreamingManager.shared.fetchExternalTimes { fetched in
                 DispatchQueue.main.async {
                     if let fetched = fetched {
-                        entries = filterAndSort(fetched)
+                        allEntries = fetched
                     }
                 }
             }
@@ -208,15 +221,13 @@ struct ManualEntriesView: View {
 
     private func filterAndSort(_ entries: [DreamingManager.ExternalTimeEntry]) -> [DreamingManager.ExternalTimeEntry] {
         entries
-            .filter { isManualEntry($0) }
+            .filter { matchesSelectedCategory($0) }
             .sorted { $0.date > $1.date }
     }
 
-    /// Identifies manual entries (vs auto-logged podcast plays). For now manual
-    /// entries are everything with type == "talking"; this will broaden when we
-    /// add other manual categories (YouTube, TV, etc.) using description prefixes.
-    private func isManualEntry(_ entry: DreamingManager.ExternalTimeEntry) -> Bool {
-        entry.type == "talking"
+    private func matchesSelectedCategory(_ entry: DreamingManager.ExternalTimeEntry) -> Bool {
+        guard let apiType = selectedCategory.apiType else { return true } // .all
+        return entry.type == apiType
     }
 
     // MARK: - Formatting
