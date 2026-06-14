@@ -53,7 +53,7 @@ final class ManualEntriesViewController: ThemedHostingController<ManualEntriesVi
         let coordinator = ManualEntriesCoordinator()
         self.coordinator = coordinator
         super.init(rootView: ManualEntriesView(coordinator: coordinator), background: \.primaryUi01)
-        title = "Manual Entries"
+        title = L10n.activity
     }
 
     @MainActor required dynamic init?(coder aDecoder: NSCoder) {
