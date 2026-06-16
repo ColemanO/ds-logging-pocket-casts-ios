@@ -40,6 +40,39 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
     var gridItems = [HomeGridListItem]()
     var gridLayout: LibraryType = Settings.libraryType()
 
+    // MARK: - Library / Recommendations switcher
+
+    private enum ActiveView: Int {
+        case library = 0
+        case recommendations = 1
+    }
+
+    private static let activeViewDefaultsKey = "PodcastsTabActiveView"
+    private let switcherHeight: CGFloat = 44
+
+    private lazy var switcherContainer: UIView = {
+        let view = ThemeableView()
+        view.style = .primaryUi01
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var switcher: UISegmentedControl = {
+        let control = UISegmentedControl(items: [L10n.podcastsLibrary, L10n.podcastsRecommendations])
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.selectedSegmentIndex = UserDefaults.standard.integer(forKey: Self.activeViewDefaultsKey)
+        control.addTarget(self, action: #selector(switcherChanged(_:)), for: .valueChanged)
+        return control
+    }()
+
+    private lazy var recommendationsHost: UIHostingController<AnyView> = {
+        let theme = Theme.sharedTheme
+        let root = AnyView(RecommendationsView().environmentObject(theme))
+        let host = UIHostingController(rootView: root)
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        return host
+    }()
+
     private var lastWillLayoutWidth: CGFloat = 0
 
     private var homeGridDataHelper = HomeGridDataHelper()
@@ -77,6 +110,60 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
 
         adjustSettingsForGridType()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: podcastsCollectionView)
+
+        setupSwitcher()
+        applyActiveView(ActiveView(rawValue: switcher.selectedSegmentIndex) ?? .library)
+    }
+
+    private func setupSwitcher() {
+        view.addSubview(switcherContainer)
+        switcherContainer.addSubview(switcher)
+
+        addChild(recommendationsHost)
+        view.addSubview(recommendationsHost.view)
+        recommendationsHost.didMove(toParent: self)
+        recommendationsHost.view.isHidden = true
+
+        NSLayoutConstraint.activate([
+            switcherContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            switcherContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            switcherContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            switcherContainer.heightAnchor.constraint(equalToConstant: switcherHeight),
+
+            switcher.centerXAnchor.constraint(equalTo: switcherContainer.centerXAnchor),
+            switcher.centerYAnchor.constraint(equalTo: switcherContainer.centerYAnchor),
+            switcher.widthAnchor.constraint(lessThanOrEqualTo: switcherContainer.widthAnchor, constant: -32),
+
+            recommendationsHost.view.topAnchor.constraint(equalTo: switcherContainer.bottomAnchor),
+            recommendationsHost.view.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            recommendationsHost.view.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            recommendationsHost.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        // The library collection view extends behind the switcher; offset its content.
+        podcastsCollectionView.contentInset.top += switcherHeight
+        podcastsCollectionView.verticalScrollIndicatorInsets.top += switcherHeight
+
+        view.bringSubviewToFront(switcherContainer)
+    }
+
+    @objc private func switcherChanged(_ sender: UISegmentedControl) {
+        let active = ActiveView(rawValue: sender.selectedSegmentIndex) ?? .library
+        UserDefaults.standard.set(sender.selectedSegmentIndex, forKey: Self.activeViewDefaultsKey)
+        applyActiveView(active)
+    }
+
+    private func applyActiveView(_ active: ActiveView) {
+        switch active {
+        case .library:
+            recommendationsHost.view.isHidden = true
+            podcastsCollectionView.isHidden = false
+            updateNavigationButtons()
+        case .recommendations:
+            recommendationsHost.view.isHidden = false
+            podcastsCollectionView.isHidden = true
+            navigationItem.rightBarButtonItems = nil
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -87,7 +174,7 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
         updateInsets()
         refreshGridItems()
         addEventObservers()
-        updateNavigationButtons()
+        applyActiveView(ActiveView(rawValue: switcher.selectedSegmentIndex) ?? .library)
 
         Analytics.track(.podcastsListShown, properties: [
             "sort_order": Settings.homeFolderSortOrder(),
