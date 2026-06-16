@@ -70,6 +70,8 @@
 		1B0B5AE12F8AA0CF00DB2B42 /* TalkTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AE02F8AA0CF00DB2B42 /* TalkTimerView.swift */; };
 		1B0B5AF12F8AA0CF00DB2B42 /* ManualEntriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AF02F8AA0CF00DB2B42 /* ManualEntriesView.swift */; };
 		1B0B5AF32F8AA0CF00DB2B42 /* ManualEntryKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AF22F8AA0CF00DB2B42 /* ManualEntryKind.swift */; };
+		1B0B5B012F9D7A0000DB2B42 /* Recommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B002F9D7A0000DB2B42 /* Recommendation.swift */; };
+		1B0B5B032F9D7A0000DB2B42 /* RecommendationMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B022F9D7A0000DB2B42 /* RecommendationMatch.swift */; };
 		1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADF2F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift */; };
 		1B0B5AE42F90B08B00DB2B42 /* DreamingStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */; };
 		1B2A05852F35BB0300887710 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
@@ -2281,6 +2283,8 @@
 		1B0B5AE02F8AA0CF00DB2B42 /* TalkTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkTimerView.swift; sourceTree = "<group>"; };
 		1B0B5AF02F8AA0CF00DB2B42 /* ManualEntriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntriesView.swift; sourceTree = "<group>"; };
 		1B0B5AF22F8AA0CF00DB2B42 /* ManualEntryKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntryKind.swift; sourceTree = "<group>"; };
+		1B0B5B002F9D7A0000DB2B42 /* Recommendation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recommendation.swift; sourceTree = "<group>"; };
+		1B0B5B022F9D7A0000DB2B42 /* RecommendationMatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationMatch.swift; sourceTree = "<group>"; };
 		1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingStatsView.swift; sourceTree = "<group>"; };
 		1BAF00E42F35C7000057B32B /* Pocket Casts App ClipPrototype.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Pocket Casts App ClipPrototype.entitlements"; sourceTree = "<group>"; };
 		1D2A1F95464D843A3E431F2C /* VoiceBoostN.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN.h; sourceTree = "<group>"; };
@@ -6854,6 +6858,7 @@
 			children = (
 				BD9086B2204E428B00C0C78D /* Search */,
 				BD70AFD3206B506700431F7F /* Cells */,
+				1B0B5BF02F9D7A0000DB2B42 /* Recommendations */,
 				BDC8CDD9203BF8BA00D88313 /* PodcastListViewController.swift */,
 				9A1F6F472DB7D10200ADF727 /* PodcastListViewController+Tip.swift */,
 				BDC8CDDB203BFAA400D88313 /* PodcastListViewController+CollectionView.swift */,
@@ -6862,6 +6867,15 @@
 				BDC3775B1C44CFFB001FD219 /* ListHeaderDelegate.swift */,
 			);
 			name = "All Podcasts";
+			sourceTree = "<group>";
+		};
+		1B0B5BF02F9D7A0000DB2B42 /* Recommendations */ = {
+			isa = PBXGroup;
+			children = (
+				1B0B5B002F9D7A0000DB2B42 /* Recommendation.swift */,
+				1B0B5B022F9D7A0000DB2B42 /* RecommendationMatch.swift */,
+			);
+			path = Recommendations;
 			sourceTree = "<group>";
 		};
 		BD92B3901C7FD57A007725E9 /* VIew Controllers */ = {
@@ -10577,6 +10591,8 @@
 				1B0B5AE12F8AA0CF00DB2B42 /* TalkTimerView.swift in Sources */,
 				1B0B5AF12F8AA0CF00DB2B42 /* ManualEntriesView.swift in Sources */,
 				1B0B5AF32F8AA0CF00DB2B42 /* ManualEntryKind.swift in Sources */,
+				1B0B5B012F9D7A0000DB2B42 /* Recommendation.swift in Sources */,
+				1B0B5B032F9D7A0000DB2B42 /* RecommendationMatch.swift in Sources */,
 				1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */,
 				F54E72192CA722A000CD5C86 /* Array+DiscoverItem.swift in Sources */,
 				9AA14FA72E37EA5900464A5A /* PlaylistsOnboardingCardView.swift in Sources */,
