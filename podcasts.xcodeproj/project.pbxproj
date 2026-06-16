@@ -80,6 +80,7 @@
 		1B0B5B0F2F9D7A0000DB2B42 /* RecommendationFuzzyMatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B0E2F9D7A0000DB2B42 /* RecommendationFuzzyMatchTests.swift */; };
 		1B0B5B112F9D7A0000DB2B42 /* RecommendationsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B102F9D7A0000DB2B42 /* RecommendationsRepository.swift */; };
 		1B0B5B132F9D7A0000DB2B42 /* RecommendationRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B122F9D7A0000DB2B42 /* RecommendationRow.swift */; };
+		1B0B5B152F9D7A0000DB2B42 /* RecommendationDisambiguationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B142F9D7A0000DB2B42 /* RecommendationDisambiguationView.swift */; };
 		1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5ADF2F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift */; };
 		1B0B5AE42F90B08B00DB2B42 /* DreamingStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */; };
 		1B2A05852F35BB0300887710 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
@@ -2301,6 +2302,7 @@
 		1B0B5B0E2F9D7A0000DB2B42 /* RecommendationFuzzyMatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationFuzzyMatchTests.swift; sourceTree = "<group>"; };
 		1B0B5B102F9D7A0000DB2B42 /* RecommendationsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsRepository.swift; sourceTree = "<group>"; };
 		1B0B5B122F9D7A0000DB2B42 /* RecommendationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRow.swift; sourceTree = "<group>"; };
+		1B0B5B142F9D7A0000DB2B42 /* RecommendationDisambiguationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationDisambiguationView.swift; sourceTree = "<group>"; };
 		1B0B5AE32F90B08B00DB2B42 /* DreamingStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamingStatsView.swift; sourceTree = "<group>"; };
 		1BAF00E42F35C7000057B32B /* Pocket Casts App ClipPrototype.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Pocket Casts App ClipPrototype.entitlements"; sourceTree = "<group>"; };
 		1D2A1F95464D843A3E431F2C /* VoiceBoostN.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VoiceBoostN.h; sourceTree = "<group>"; };
@@ -6896,6 +6898,7 @@
 				1B0B5B0C2F9D7A0000DB2B42 /* RecommendationFuzzyMatch.swift */,
 				1B0B5B102F9D7A0000DB2B42 /* RecommendationsRepository.swift */,
 				1B0B5B122F9D7A0000DB2B42 /* RecommendationRow.swift */,
+				1B0B5B142F9D7A0000DB2B42 /* RecommendationDisambiguationView.swift */,
 			);
 			path = Recommendations;
 			sourceTree = "<group>";
@@ -10633,6 +10636,7 @@
 				1B0B5B0D2F9D7A0000DB2B42 /* RecommendationFuzzyMatch.swift in Sources */,
 				1B0B5B112F9D7A0000DB2B42 /* RecommendationsRepository.swift in Sources */,
 				1B0B5B132F9D7A0000DB2B42 /* RecommendationRow.swift in Sources */,
+				1B0B5B152F9D7A0000DB2B42 /* RecommendationDisambiguationView.swift in Sources */,
 				1B0B5AE22F8AA0CF00DB2B42 /* TalkSessionSummaryView.swift in Sources */,
 				F54E72192CA722A000CD5C86 /* Array+DiscoverItem.swift in Sources */,
 				9AA14FA72E37EA5900464A5A /* PlaylistsOnboardingCardView.swift in Sources */,
