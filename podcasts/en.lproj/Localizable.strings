@@ -5922,3 +5922,30 @@
 
 /* Resume button for talk timer */
 "talk_resume" = "Resume";
+
+/* Podcasts tab — switcher: native library view */
+"podcasts_library" = "Library";
+
+/* Podcasts tab — switcher: recommendations from the community sheet */
+"podcasts_recommendations" = "Recommendations";
+
+/* Disambiguation sheet — title */
+"recommendation_choose_podcast" = "Choose podcast";
+
+/* Disambiguation sheet — bottom button to open the row's external link */
+"recommendation_open_external" = "Open external link";
+
+/* Recommendations — error retry button */
+"recommendation_retry" = "Retry";
+
+/* Recommendations — generic fetch error */
+"recommendation_fetch_failed" = "Couldn't load recommendations. Check your connection and try again.";
+
+/* Recommendations — empty disambiguation: no Pocket Casts results AND no external link */
+"recommendation_no_match" = "No matching podcast found.";
+
+/* Recommendations — empty list defensive copy */
+"recommendations_empty" = "No recommendations available.";
+
+/* Recommendations — mentions count accessibility label */
+"recommendation_mentions_label" = "%@ mentions";

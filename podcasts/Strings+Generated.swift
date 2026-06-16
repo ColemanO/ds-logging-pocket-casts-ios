@@ -2999,6 +2999,8 @@ internal enum L10n {
   internal static var podcastsLargeGrid: String { return L10n.tr("Localizable", "podcasts_large_grid", fallback: "Large Grid") }
   /// Title for the set of options for the presentation styles like grid sizes vs list view.
   internal static var podcastsLayout: String { return L10n.tr("Localizable", "podcasts_layout", fallback: "Layout") }
+  /// Podcasts tab — switcher: native library view
+  internal static var podcastsLibrary: String { return L10n.tr("Localizable", "podcasts_library", fallback: "Library") }
   /// Grid Items will be sorted sorted based on the users custom ordering. This is performed by dragging and dropping a podcast to the desired order.
   internal static var podcastsLibrarySortCustom: String { return L10n.tr("Localizable", "podcasts_library_sort_custom", fallback: "Drag and Drop") }
   /// Grid Items will be sorted based on the date the user subscribed to them. Newest to oldest.
@@ -3017,6 +3019,8 @@ internal enum L10n {
   internal static var podcastsList: String { return L10n.tr("Localizable", "podcasts_list", fallback: "List") }
   /// A common string used throughout the app. Refers to Podcasts in the plural form as well as the Podcasts screen.
   internal static var podcastsPlural: String { return L10n.tr("Localizable", "podcasts_plural", fallback: "Podcasts") }
+  /// Podcasts tab — switcher: recommendations from the community sheet
+  internal static var podcastsRecommendations: String { return L10n.tr("Localizable", "podcasts_recommendations", fallback: "Recommendations") }
   /// Prompt to open the menu to share your podcasts list.
   internal static var podcastsShare: String { return L10n.tr("Localizable", "podcasts_share", fallback: "Share Podcasts") }
   /// Presents the podcasts with small podcast artwork tiles.
@@ -3131,6 +3135,22 @@ internal enum L10n {
   internal static var ratingWhatsNewMessage: String { return L10n.tr("Localizable", "rating_whats_new_message", fallback: "Rate your top podcasts and let creators know how much you appreciate their work. Plus, your ratings help others find new favorite shows!") }
   /// What's New sheet title
   internal static var ratingWhatsNewTitle: String { return L10n.tr("Localizable", "rating_whats_new_title", fallback: "Now Available: Podcast Ratings 🎉") }
+  /// Disambiguation sheet — title
+  internal static var recommendationChoosePodcast: String { return L10n.tr("Localizable", "recommendation_choose_podcast", fallback: "Choose podcast") }
+  /// Recommendations — generic fetch error
+  internal static var recommendationFetchFailed: String { return L10n.tr("Localizable", "recommendation_fetch_failed", fallback: "Couldn't load recommendations. Check your connection and try again.") }
+  /// Recommendations — mentions count accessibility label
+  internal static func recommendationMentionsLabel(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "recommendation_mentions_label", String(describing: p1), fallback: "%@ mentions")
+  }
+  /// Recommendations — empty disambiguation: no Pocket Casts results AND no external link
+  internal static var recommendationNoMatch: String { return L10n.tr("Localizable", "recommendation_no_match", fallback: "No matching podcast found.") }
+  /// Disambiguation sheet — bottom button to open the row's external link
+  internal static var recommendationOpenExternal: String { return L10n.tr("Localizable", "recommendation_open_external", fallback: "Open external link") }
+  /// Recommendations — error retry button
+  internal static var recommendationRetry: String { return L10n.tr("Localizable", "recommendation_retry", fallback: "Retry") }
+  /// Recommendations — empty list defensive copy
+  internal static var recommendationsEmpty: String { return L10n.tr("Localizable", "recommendations_empty", fallback: "No recommendations available.") }
   /// Referrals - Claim Guest Pass action button title
   internal static var referralsClaimGuestPassAction: String { return L10n.tr("Localizable", "referrals_claim_guest_pass_action", fallback: "Activate my pass") }
   /// Referrals - Claim Guest Pass banner message.
