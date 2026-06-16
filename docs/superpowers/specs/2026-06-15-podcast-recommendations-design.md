@@ -181,7 +181,7 @@ final class RecommendationsRepository: ObservableObject {
 
     func loadOnAppear() async  // reads cache, then fetches in background if cache is stale or absent
     func refresh() async       // pull-to-refresh — force-fetch, surface errors
-    func match(for rec: Recommendation) async -> RecommendationMatch
+    func resolve(for rec: Recommendation) async -> RecommendationResolution
     func overrideMatch(_ match: RecommendationMatch, for rec: Recommendation)
     private func loadCachesFromDisk()
     private func persistSnapshot(_ snapshot: RecommendationsSnapshot)
@@ -234,32 +234,82 @@ private func fetchCSV() async throws -> RecommendationsSnapshot {
 
 ## Matching to Pocket Casts
 
+The repository exposes `resolve(for:)` which returns a discriminated outcome the caller can act on directly. This is different from the cached `RecommendationMatch` enum (which only stores terminal states): `resolve` may return a transient outcome that carries the search results needed to populate the disambiguation sheet.
+
 ```swift
-func match(for rec: Recommendation) async -> RecommendationMatch {
+/// Outcome of resolving a recommendation tap. Drives the row-tap flow.
+/// Not persisted — the cache stores `RecommendationMatch` (terminal states only).
+enum RecommendationResolution {
+    /// We have (or just found) a confident Pocket Casts match.
+    case podcast(uuid: String)
+    /// User previously chose "Open external link" for this row.
+    case externalOnly(url: String)
+    /// Search yielded results but none fuzzy-matched. Caller should open the
+    /// disambiguation sheet with these results plus an "Open external link"
+    /// row when `externalURL` is non-nil.
+    case needsDisambiguation(results: [PodcastFolderSearchResult], externalURL: URL?)
+    /// Search yielded zero usable results AND there's no external link.
+    /// Caller should show the "No matching podcast found" alert.
+    case noOptions
+}
+
+func resolve(for rec: Recommendation) async -> RecommendationResolution {
+    // 1. Cache hit on a terminal state — return directly.
     if let cached = matches[rec.matchKey] {
-        if case .miss(let checkedAt) = cached, Date().timeIntervalSince(checkedAt) > 30 * 86400 {
-            // expired miss; re-search
-        } else {
-            return cached
+        switch cached {
+        case .podcast(let uuid):
+            return .podcast(uuid: uuid)
+        case .externalOnly(let url):
+            return .externalOnly(url: url)
+        case .miss(let checkedAt) where Date().timeIntervalSince(checkedAt) <= 30 * 86400:
+            // Honor cached miss within TTL — show disambiguation/no-options
+            // using only the external link (no re-search).
+            return externalURL(for: rec).map { .needsDisambiguation(results: [], externalURL: $0) }
+                ?? .noOptions
+        case .miss:
+            break // expired; fall through to re-search
         }
     }
+
+    // 2. Search Pocket Casts.
+    let results: [PodcastFolderSearchResult]
     do {
-        let results = try await PodcastSearchTask().search(term: rec.title)
-        if let top = results.first, fuzzyMatch(rec.title, top.title) {
-            let result = RecommendationMatch.podcast(uuid: top.uuid)
-            matches[rec.matchKey] = result
-            persistMatches()
-            return result
-        }
-        // No confident match. Return the raw results to the caller so it can
-        // open the disambiguation sheet. We do NOT persist a miss here — the
-        // user may still pick a result from the sheet, which becomes a hit.
-        return .miss(checkedAt: Date()) // transient marker; caller checks for sheet trigger
+        results = try await PodcastSearchTask().search(term: rec.title)
     } catch {
-        return .miss(checkedAt: Date())
+        // Network/search failed. Don't persist — try again next tap.
+        return externalURL(for: rec).map { .needsDisambiguation(results: [], externalURL: $0) }
+            ?? .noOptions
     }
+
+    // 3. Try fuzzy match on the top result.
+    if let top = results.first, fuzzyMatch(rec.title, top.title) {
+        matches[rec.matchKey] = .podcast(uuid: top.uuid)
+        persistMatches()
+        return .podcast(uuid: top.uuid)
+    }
+
+    // 4. No confident match. Decide what to surface.
+    let extURL = externalURL(for: rec)
+    if results.isEmpty && extURL == nil {
+        // Persist as a miss so we don't re-search every tap for 30 days.
+        matches[rec.matchKey] = .miss(checkedAt: Date())
+        persistMatches()
+        return .noOptions
+    }
+    // Don't persist — user may still pick a result, which becomes a hit.
+    return .needsDisambiguation(results: results, externalURL: extURL)
+}
+
+private func externalURL(for rec: Recommendation) -> URL? {
+    guard let raw = rec.otherLinks?.trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }
+    // The "Other Links" column may contain multiple whitespace/comma-separated URLs.
+    // Use the first parseable one.
+    let candidates = raw.components(separatedBy: CharacterSet(charactersIn: " ,\n"))
+    return candidates.lazy.compactMap { URL(string: $0) }.first
 }
 ```
+
+When the disambiguation sheet returns a user selection, the caller invokes `overrideMatch(_:for:)` to persist `.podcast(uuid:)` or `.externalOnly(url:)`. Subsequent taps short-circuit on the cache.
 
 ### Fuzzy match
 
@@ -271,38 +321,65 @@ The implementation step can prefer the simpler "normalized equality OR shorter i
 
 ## Disambiguation sheet
 
-`RecommendationDisambiguationView.swift`. SwiftUI sheet presented from a row when match returns `.miss` but search yielded ≥1 result. Receives `[PodcastFolderSearchResult]` plus the source `Recommendation`.
+`RecommendationDisambiguationView.swift`. SwiftUI sheet presented when `resolve(for:)` returns `.needsDisambiguation(results:externalURL:)`. Receives the source `Recommendation`, the `results: [PodcastFolderSearchResult]` (may be empty), and an optional `externalURL: URL`.
 
 Layout:
 
 ```
 Nav bar:  [Cancel]   Choose podcast
 ─────────────────────────────────────
-"<sheet title>"                        ← header
+"<sheet title>"                        ← header (the Recommendation.title)
 ─────────────────────────────────────
 [artwork] Result 1 Title
           Result 1 Author
 [artwork] Result 2 Title
           Result 2 Author
-…
+…                                       ← top 5 results, omitted if results.isEmpty
 ─────────────────────────────────────
-Open external link →                    ← if otherLinks present
+Open external link →                    ← only shown when externalURL != nil
 ```
 
-- Tapping a result: persists `.podcast(uuid:)` in the match cache, dismisses the sheet, and routes to the podcast page via `NavigationManager.navigate(to: .podcastPageKey, ...)`.
-- Tapping "Open external link": persists `.externalOnly(url:)`, dismisses, opens the URL in Safari via `UIApplication.shared.open(...)`. The next tap on that row goes straight to the link.
+By construction, the sheet is never presented with both `results.isEmpty` AND `externalURL == nil` — `resolve(for:)` returns `.noOptions` in that case so the caller shows the alert instead. So the sheet always has at least one tappable row.
+
+- Tapping a result: calls `repository.overrideMatch(.podcast(uuid:), for: rec)`, dismisses the sheet, routes to the podcast page via `NavigationManager.navigate(to: .podcastPageKey, ...)`.
+- Tapping "Open external link": calls `repository.overrideMatch(.externalOnly(url:), for: rec)`, dismisses, opens the URL in Safari via `UIApplication.shared.open(...)`. The next tap on that row short-circuits to the link.
+- Tapping Cancel: dismisses without persisting anything. Next tap re-runs the search.
 
 ## Row tap flow
 
 ```
 User taps row
   ↓
-repository.match(for: rec)
-  ├─ .podcast(uuid)         → NavigationManager → podcast page
-  ├─ .externalOnly(url)     → Safari
-  ├─ search results found   → present DisambiguationView
-  └─ search yielded nothing → present DisambiguationView with only "Open external link" row
-                              (if no otherLinks either, show an alert "No matching podcast found")
+repository.resolve(for: rec)
+  ├─ .podcast(uuid)                       → NavigationManager → podcast page
+  ├─ .externalOnly(url)                   → Safari (UIApplication.open)
+  ├─ .needsDisambiguation(results, url?)  → present DisambiguationView
+  │                                         (results may be empty; "Open external
+  │                                          link" row visible iff url != nil)
+  └─ .noOptions                           → alert "No matching podcast found"
+```
+
+The view's `handleTap(rec)` looks like:
+
+```swift
+private func handleTap(_ rec: Recommendation) {
+    Task {
+        let outcome = await repo.resolve(for: rec)
+        switch outcome {
+        case .podcast(let uuid):
+            NavigationManager.sharedManager.navigateTo(
+                NavigationManager.podcastPageKey,
+                data: [NavigationManager.podcastKey: uuid]
+            )
+        case .externalOnly(let url):
+            UIApplication.shared.open(url)
+        case .needsDisambiguation(let results, let externalURL):
+            disambiguationPayload = .init(rec: rec, results: results, externalURL: externalURL)
+        case .noOptions:
+            showNoMatchAlert = true
+        }
+    }
+}
 ```
 
 ## UI — `RecommendationsView`
@@ -414,17 +491,34 @@ Native `.refreshable { await repo.refresh() }`. Standard system spinner; no cust
 
 ## Wiring into the Podcasts tab
 
-`PodcastListViewController` already manages the Library content. The segmented switcher lives in a small container at the top of its view, below the nav bar.
+`PodcastListViewController` already manages the Library content. The switcher and both child views all live inside `PodcastListViewController` — the switcher is a UIKit element that toggles which child is visible.
+
+### Layout
+
+```
+┌─────────────────────────────────┐
+│  UINavigationBar  (system)      │
+├─────────────────────────────────┤
+│  switcherContainer (UIView)     │  ← pinned, height 44pt
+│  [ Library  |  Recommendations ]│     does NOT scroll with content
+├─────────────────────────────────┤
+│  child content area             │  ← exactly one of:
+│  • existing library subviews    │     - the current Library content
+│  • UIHostingController.view     │     - the RecommendationsView host
+└─────────────────────────────────┘
+```
 
 ### Changes to `PodcastListViewController.swift`
 
-- Add a private `UISegmentedControl` with two segments: `L10n.podcastsLibrary` ("Library") and `L10n.podcastsRecommendations` ("Recommendations").
-- Add a child controller for the recommendations view: `UIHostingController<RecommendationsView>`.
+- Add a `switcherContainer: UIView` pinned to the top of `view` with Auto Layout (top to safe area, leading/trailing to superview, height 44pt). It is **not** placed in the nav bar's `titleView`; it lives below the nav bar in the controller's own view hierarchy and does not scroll.
+- Inside `switcherContainer`, add a `UISegmentedControl` (`.segmented` style — system default) with two segments: `L10n.podcastsLibrary` ("Library") and `L10n.podcastsRecommendations` ("Recommendations"). Centered horizontally, 8pt vertical padding.
+- The existing library subviews' top constraints shift from `safe area top` to `switcherContainer.bottomAnchor`.
+- Add a child controller `recommendationsHost: UIHostingController<RecommendationsView>`. Its `view.topAnchor` also pins to `switcherContainer.bottomAnchor`; leading/trailing/bottom pin to the same edges the library uses today.
 - On segment change:
-  - `0` → hide hosting controller's view, show the existing library view.
-  - `1` → show hosting controller's view, hide library view.
-- The segmented control's selection persists to UserDefaults under key `"PodcastsTabActiveView"` so the user lands back on whichever they last used.
-- The existing nav-bar right-side menu (more / sort / change layout) is **only relevant to the Library view** — when the user is on Recommendations, hide that menu item. Pull-to-refresh on the recommendations list is the only refresh mechanism we need there.
+  - `0` → `recommendationsHost.view.isHidden = true`; library subviews `isHidden = false`.
+  - `1` → `recommendationsHost.view.isHidden = false`; library subviews `isHidden = true`.
+- The segmented control's selected index persists to UserDefaults under key `"PodcastsTabActiveView"`. On `viewDidLoad`, read the key and apply the matching segment before first display.
+- The existing nav-bar right-side menu (more / sort / change layout) is **only relevant to the Library view** — when the user is on Recommendations, set the right `UIBarButtonItem` to `nil`. Pull-to-refresh on the recommendations list is the only refresh mechanism we need there.
 
 ### New L10n keys
 
@@ -490,7 +584,8 @@ Ends with `** BUILD SUCCEEDED **`.
 8. **Persistent match cache:** Force-quit, reopen → tap same row → goes straight to podcast page (no search spinner).
 9. **Match → disambiguation:** Tap a row with ambiguous title → search results sheet appears → tap a result → opens podcast page; next tap on same row goes directly there.
 10. **External-only fallback:** From disambiguation sheet, tap "Open external link" → Safari opens. Subsequent taps on that row go to Safari directly.
-11. **No match + no external link:** Tap a row with no Pocket Casts results and blank Other Links → alert "No matching podcast found."
+11. **No match + no external link:** Tap a row with no Pocket Casts results and blank Other Links → alert "No matching podcast found." (Second tap on the same row, within 30 days, surfaces the same alert without a search spinner — the miss is cached.)
+11a. **No match + has external link:** Tap a row with no Pocket Casts results but populated Other Links → disambiguation sheet shows only the "Open external link" row → tap it → Safari opens.
 12. **Pull-to-refresh:** Pull down → spinner → CSV re-fetched; new content visible if sheet changed.
 13. **Refresh failure with cache:** Toggle airplane mode → pull-to-refresh → alert "Couldn't load recommendations…"; existing list stays visible.
 14. **Refresh failure no cache:** Fresh install + airplane mode → recommendations tab → error view with Retry button. Disable airplane mode → tap Retry → list loads.
