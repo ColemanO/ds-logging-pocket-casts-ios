@@ -1,3 +1,4 @@
+import Combine
 import DifferenceKit
 import SwiftUI
 import PocketCastsDataModel
@@ -37,41 +38,21 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
         }
     }
 
-    var gridItems = [HomeGridListItem]()
-    var gridLayout: LibraryType = Settings.libraryType()
-
-    // MARK: - Library / Recommendations switcher
-
-    private enum ActiveView: Int {
-        case library = 0
-        case recommendations = 1
+    struct PodcastLibrarySection {
+        let title: String
+        let level: Int?
+        var items: [HomeGridListItem]
     }
 
-    private static let activeViewDefaultsKey = "PodcastsTabActiveView"
-    private let switcherHeight: CGFloat = 44
+    var gridItems = [HomeGridListItem]()
+    var gridSections: [PodcastLibrarySection] = []
+    var gridLayout: LibraryType = Settings.libraryType()
 
-    private lazy var switcherContainer: UIView = {
-        let view = ThemeableView()
-        view.style = .primaryUi01
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
+    var isShowingLevelSections: Bool {
+        gridSections.contains { $0.level != nil }
+    }
 
-    private lazy var switcher: UISegmentedControl = {
-        let control = UISegmentedControl(items: [L10n.podcastsLibrary, L10n.podcastsRecommendations])
-        control.translatesAutoresizingMaskIntoConstraints = false
-        control.selectedSegmentIndex = UserDefaults.standard.integer(forKey: Self.activeViewDefaultsKey)
-        control.addTarget(self, action: #selector(switcherChanged(_:)), for: .valueChanged)
-        return control
-    }()
-
-    private lazy var recommendationsHost: UIHostingController<AnyView> = {
-        let theme = Theme.sharedTheme
-        let root = AnyView(RecommendationsView().environmentObject(theme))
-        let host = UIHostingController(rootView: root)
-        host.view.translatesAutoresizingMaskIntoConstraints = false
-        return host
-    }()
+    private var snapshotCancellable: AnyCancellable?
 
     private var lastWillLayoutWidth: CGFloat = 0
 
@@ -111,59 +92,10 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
         adjustSettingsForGridType()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: podcastsCollectionView)
 
-        setupSwitcher()
-        applyActiveView(ActiveView(rawValue: switcher.selectedSegmentIndex) ?? .library)
-    }
-
-    private func setupSwitcher() {
-        view.addSubview(switcherContainer)
-        switcherContainer.addSubview(switcher)
-
-        addChild(recommendationsHost)
-        view.addSubview(recommendationsHost.view)
-        recommendationsHost.didMove(toParent: self)
-        recommendationsHost.view.isHidden = true
-
-        NSLayoutConstraint.activate([
-            switcherContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            switcherContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            switcherContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            switcherContainer.heightAnchor.constraint(equalToConstant: switcherHeight),
-
-            switcher.centerXAnchor.constraint(equalTo: switcherContainer.centerXAnchor),
-            switcher.centerYAnchor.constraint(equalTo: switcherContainer.centerYAnchor),
-            switcher.widthAnchor.constraint(lessThanOrEqualTo: switcherContainer.widthAnchor, constant: -32),
-
-            recommendationsHost.view.topAnchor.constraint(equalTo: switcherContainer.bottomAnchor),
-            recommendationsHost.view.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            recommendationsHost.view.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            recommendationsHost.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-
-        // The library collection view extends behind the switcher; offset its content.
-        podcastsCollectionView.contentInset.top += switcherHeight
-        podcastsCollectionView.verticalScrollIndicatorInsets.top += switcherHeight
-
-        view.bringSubviewToFront(switcherContainer)
-    }
-
-    @objc private func switcherChanged(_ sender: UISegmentedControl) {
-        let active = ActiveView(rawValue: sender.selectedSegmentIndex) ?? .library
-        UserDefaults.standard.set(sender.selectedSegmentIndex, forKey: Self.activeViewDefaultsKey)
-        applyActiveView(active)
-    }
-
-    private func applyActiveView(_ active: ActiveView) {
-        switch active {
-        case .library:
-            recommendationsHost.view.isHidden = true
-            podcastsCollectionView.isHidden = false
-            updateNavigationButtons()
-        case .recommendations:
-            recommendationsHost.view.isHidden = false
-            podcastsCollectionView.isHidden = true
-            navigationItem.rightBarButtonItems = nil
-        }
+        snapshotCancellable = RecommendationsRepository.shared.$snapshot
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refreshGridItems() }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -174,7 +106,6 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
         updateInsets()
         refreshGridItems()
         addEventObservers()
-        applyActiveView(ActiveView(rawValue: switcher.selectedSegmentIndex) ?? .library)
 
         Analytics.track(.podcastsListShown, properties: [
             "sort_order": Settings.homeFolderSortOrder(),
@@ -396,9 +327,17 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
             }
 
             DispatchQueue.main.sync {
-                if strongSelf.gridLayout != Settings.libraryType() {
+                let newSections = strongSelf.buildGridSections(from: newData)
+                let sectionsChanged = newSections.map(\.level) != strongSelf.gridSections.map(\.level)
+                strongSelf.gridSections = newSections
+
+                if strongSelf.gridLayout != Settings.libraryType() || sectionsChanged {
+                    strongSelf.gridItems = newData
                     strongSelf.podcastsCollectionView.reloadData()
                     strongSelf.gridLayout = Settings.libraryType()
+                } else if strongSelf.isShowingLevelSections {
+                    strongSelf.gridItems = newData
+                    strongSelf.podcastsCollectionView.reloadData()
                 } else {
                     let stagedSet = StagedChangeset(source: oldData, target: newData)
                     strongSelf.podcastsCollectionView.reload(using: stagedSet, setData: { data in
@@ -497,19 +436,53 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
     }
 
     func itemCount() -> Int {
-        gridItems.count
+        isShowingLevelSections
+            ? gridSections.reduce(0) { $0 + $1.items.count }
+            : gridItems.count
+    }
+
+    private func buildGridSections(from items: [HomeGridListItem]) -> [PodcastLibrarySection] {
+        let repo = RecommendationsRepository.shared
+        var byLevel: [Int: (section: RecommendationSection, items: [HomeGridListItem])] = [:]
+        var other: [HomeGridListItem] = []
+        for item in items {
+            if item.isEmpty {
+                other.append(item)
+                continue
+            }
+            if let podcast = item.podcast,
+               let recSection = repo.recommendationSection(forPodcastUUID: podcast.uuid, title: podcast.title ?? "") {
+                if byLevel[recSection.level] != nil {
+                    byLevel[recSection.level]!.items.append(item)
+                } else {
+                    byLevel[recSection.level] = (recSection, [item])
+                }
+            } else {
+                other.append(item)
+            }
+        }
+        var result = byLevel.values
+            .sorted { $0.section.level < $1.section.level }
+            .map { PodcastLibrarySection(title: $0.section.title, level: $0.section.level, items: $0.items) }
+        if !other.isEmpty {
+            result.append(PodcastLibrarySection(title: "Other", level: nil, items: other))
+        }
+        return result
     }
 
     func podcastAt(indexPath: IndexPath) -> Podcast? {
-        gridItems[safe: indexPath.row]?.podcast
+        itemAt(indexPath: indexPath)?.podcast
     }
 
     func folderAt(indexPath: IndexPath) -> Folder? {
-        gridItems[safe: indexPath.row]?.folder
+        itemAt(indexPath: indexPath)?.folder
     }
 
     func itemAt(indexPath: IndexPath) -> HomeGridListItem? {
-        gridItems[safe: indexPath.row]
+        if isShowingLevelSections {
+            return gridSections[safe: indexPath.section]?.items[safe: indexPath.item]
+        }
+        return gridItems[safe: indexPath.row]
     }
 
     func gridTypeChanged() {

@@ -10,6 +10,7 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
     private static let folderSquareCellId = "FolderGridCell"
     private static let folderListCellId = "FolderListCell"
     private static let bannerAdHeaderId = "BannerAdHeader"
+    private static let levelSectionHeaderId = "LevelSectionHeader"
     private static let emptyStateCellId = "EmptyStateCell"
 
     func registerCells() {
@@ -21,14 +22,15 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
 
         // Register header view for banner ads
         podcastsCollectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: PodcastListViewController.bannerAdHeaderId)
+        podcastsCollectionView.register(LevelSectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: PodcastListViewController.levelSectionHeaderId)
     }
 
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        1
+        isShowingLevelSections ? gridSections.count : 1
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        itemCount()
+        isShowingLevelSections ? (gridSections[safe: section]?.items.count ?? 0) : itemCount()
     }
 
     private func makeEmptyStateView() -> EmptyStateView<Text, DefaultEmptyStateStyle> {
@@ -120,7 +122,7 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
     // MARK: - Re-ordering
 
     func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
-        true
+        !isShowingLevelSections
     }
 
     func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
@@ -180,6 +182,12 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader {
+            if isShowingLevelSections, let sectionData = gridSections[safe: indexPath.section] {
+                let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: PodcastListViewController.levelSectionHeaderId, for: indexPath) as! LevelSectionHeaderView
+                headerView.configure(title: sectionData.title)
+                return headerView
+            }
+
             let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: PodcastListViewController.bannerAdHeaderId, for: indexPath)
 
             // Remove existing subviews
@@ -243,6 +251,9 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        if isShowingLevelSections {
+            return CGSize(width: collectionView.bounds.width, height: 36)
+        }
 
         guard let bannerAdModel else {
             return .zero
@@ -257,5 +268,33 @@ extension PodcastListViewController: UICollectionViewDelegate, UICollectionViewD
 
         // Return zero height initially for animation, then full size after animation starts
         return isAnimatingBannerAd ? .zero : size
+    }
+}
+
+private final class LevelSectionHeaderView: UICollectionReusableView {
+    private let label = UILabel()
+    private var labelLeadingConstraint: NSLayoutConstraint!
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        label.font = .systemFont(ofSize: 13, weight: .semibold)
+        label.textColor = ThemeColor.primaryText02()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        labelLeadingConstraint = label.leadingAnchor.constraint(equalTo: leadingAnchor)
+        NSLayoutConstraint.activate([
+            labelLeadingConstraint,
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6)
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    func configure(title: String) {
+        label.text = title.uppercased()
+        // In list mode the header spans full width (no contentInset), so indent to match
+        // artwork inside list cells. In grid mode the header is already offset by contentInset.
+        labelLeadingConstraint.constant = Settings.libraryType() == .list ? 16 : 0
     }
 }

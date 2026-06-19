@@ -31,6 +31,9 @@ final class RecommendationsRepository: ObservableObject {
     @Published private(set) var matches: [String: RecommendationMatch] = [:]
     @Published private(set) var loadState: LoadState = .idle
 
+    private var _matchKeyToSection: [String: RecommendationSection]?
+    private var _uuidToSection: [String: RecommendationSection]?
+
     private let csvURL = URL(string:
         "https://docs.google.com/spreadsheets/d/1lBmLxvWJpucXhRPayfXD7CVqpMoa2tyEbZi1rFAwsFs/export?format=csv&gid=0"
     )!
@@ -122,6 +125,33 @@ final class RecommendationsRepository: ObservableObject {
         return matches[rec.matchKey]
     }
 
+    func recommendationSection(forPodcastUUID uuid: String, title: String) -> RecommendationSection? {
+        loadCachesFromDiskIfNeeded()
+        if _matchKeyToSection == nil { buildSectionIndexes() }
+        if let section = _uuidToSection?[uuid] { return section }
+        guard let mkMap = _matchKeyToSection else { return nil }
+
+        let key = title.lowercased()
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+
+        if let section = mkMap[key] { return section }
+
+        // Substring fallback: sheet title inside podcast title or vice versa.
+        // Guards: key must be ≥ 2 words (single words are too generic), and the
+        // match must land on word boundaries so "span" can't match "spanish".
+        let best = mkMap.keys
+            .filter { mk in
+                let wordCount = mk.components(separatedBy: .whitespaces).filter { !$0.isEmpty }.count
+                guard wordCount >= 2 else { return false }
+                return Self.wordBoundaryContains(key, needle: mk)
+                    || Self.wordBoundaryContains(mk, needle: key)
+            }
+            .max(by: { $0.count < $1.count })
+        return best.flatMap { mkMap[$0] }
+    }
+
     // MARK: - Disk cache
 
     private var cachesDir: URL {
@@ -163,6 +193,31 @@ final class RecommendationsRepository: ObservableObject {
     private func persistMatches() {
         guard let data = try? JSONEncoder().encode(matches) else { return }
         try? data.write(to: matchesFile, options: .atomic)
+        invalidateSectionIndexes()
+    }
+
+    private func invalidateSectionIndexes() {
+        _matchKeyToSection = nil
+        _uuidToSection = nil
+    }
+
+    private func buildSectionIndexes() {
+        guard let sections = snapshot?.sections else { return }
+        var mkMap: [String: RecommendationSection] = [:]
+        for section in sections {
+            for rec in section.recommendations {
+                mkMap[rec.matchKey] = section
+            }
+        }
+        _matchKeyToSection = mkMap
+
+        var uuidMap: [String: RecommendationSection] = [:]
+        for (matchKey, match) in matches {
+            if case .podcast(let uuid) = match, let section = mkMap[matchKey] {
+                uuidMap[uuid] = section
+            }
+        }
+        _uuidToSection = uuidMap
     }
 
     // MARK: - Fetch
@@ -171,6 +226,7 @@ final class RecommendationsRepository: ObservableObject {
         do {
             let fresh = try await fetchCSV()
             snapshot = fresh
+            invalidateSectionIndexes()
             persistSnapshot(fresh)
             loadState = .loaded
         } catch {
@@ -190,6 +246,7 @@ final class RecommendationsRepository: ObservableObject {
             do {
                 let fresh = try await self.fetchCSV()
                 self.snapshot = fresh
+                self.invalidateSectionIndexes()
                 self.persistSnapshot(fresh)
             } catch {
                 // Silent. Stale cache stays visible.
@@ -208,6 +265,18 @@ final class RecommendationsRepository: ObservableObject {
         let rows = RecommendationsCSVParser.rows(from: text)
         let sections = RecommendationsSectionBuilder.build(from: rows)
         return RecommendationsSnapshot(fetchedAt: Date(), sections: sections)
+    }
+
+    // MARK: - Matching helpers
+
+    /// Returns true if `needle` appears inside `haystack` at word boundaries on both sides.
+    private static func wordBoundaryContains(_ haystack: String, needle: String) -> Bool {
+        guard !needle.isEmpty, let range = haystack.range(of: needle) else { return false }
+        let beforeOK = range.lowerBound == haystack.startIndex
+            || !haystack[haystack.index(before: range.lowerBound)].isLetter
+        let afterOK = range.upperBound == haystack.endIndex
+            || !haystack[range.upperBound].isLetter
+        return beforeOK && afterOK
     }
 
     // MARK: - External link parsing

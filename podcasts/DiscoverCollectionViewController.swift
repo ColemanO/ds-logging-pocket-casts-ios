@@ -26,6 +26,21 @@ class DiscoverCollectionViewController: PCViewController {
     fileprivate var selectedCategory: DiscoverCategory?
     private var loadingTasks: [String: Task<Void, Never>] = [:]
 
+    private var isShowingRecommendations = true
+
+    private lazy var recommendationsHost: UIHostingController<AnyView> = {
+        let theme = Theme.sharedTheme
+        let root = AnyView(RecommendationsDiscoverView().environmentObject(theme))
+        let host = UIHostingController(rootView: root)
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        host.view.backgroundColor = .clear
+        return host
+    }()
+
+    private lazy var toggleBarButton: UIBarButtonItem = {
+        UIBarButtonItem(image: UIImage(systemName: "globe"), style: .plain, target: self, action: #selector(toggleRecommendations))
+    }()
+
     private(set) lazy var searchController: PCSearchBarController = {
         PCSearchBarController()
     }()
@@ -58,6 +73,7 @@ class DiscoverCollectionViewController: PCViewController {
 
         setupMiniPlayerObservers()
         setupLoginObserver()
+        setupRecommendationsToggle()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -347,6 +363,45 @@ extension DiscoverCollectionViewController {
         // Add observer for login/logout notification
         NotificationCenter.default.addObserver(forName: .userLoginDidChange, object: nil, queue: .main) { [weak self] _ in
             self?.reloadData()
+        }
+    }
+}
+
+// MARK: - Recommendations Mode
+extension DiscoverCollectionViewController {
+    fileprivate func setupRecommendationsToggle() {
+        extraRightButtons = [toggleBarButton]
+        applyRecommendationsMode()
+    }
+
+    @objc private func toggleRecommendations() {
+        isShowingRecommendations.toggle()
+        applyRecommendationsMode()
+    }
+
+    private func applyRecommendationsMode() {
+        if isShowingRecommendations {
+            if recommendationsHost.parent == nil {
+                addChild(recommendationsHost)
+                view.addSubview(recommendationsHost.view)
+                NSLayoutConstraint.activate([
+                    recommendationsHost.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+                    recommendationsHost.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                    recommendationsHost.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                    recommendationsHost.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+                ])
+                recommendationsHost.didMove(toParent: self)
+            }
+            recommendationsHost.view.isHidden = false
+            collectionView.isHidden = true
+            searchController.view.isHidden = true
+            toggleBarButton.image = UIImage(systemName: "globe")
+        } else {
+            recommendationsHost.view.isHidden = true
+            collectionView.isHidden = false
+            searchController.view.isHidden = false
+            view.bringSubviewToFront(searchController.view)
+            toggleBarButton.image = UIImage(systemName: "star.fill")
         }
     }
 }
