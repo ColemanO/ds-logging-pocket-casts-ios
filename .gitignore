@@ -37,6 +37,8 @@ artifacts/*
 *.app.dSYM.zip
 *.ipa
 *.build
+build/
+DerivedData/
 
 # Claude Code ignored personal preferences
 .claude/settings.local.json

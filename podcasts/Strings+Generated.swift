@@ -154,6 +154,8 @@ internal enum L10n {
   internal static var accountWelcome: String { return L10n.tr("Localizable", "account_welcome", fallback: "Welcome to Pocket Casts!") }
   /// Welcome message presented after a user has signed up for Pocket Casts Plus
   internal static var accountWelcomePlus: String { return L10n.tr("Localizable", "account_welcome_plus", fallback: "Welcome to Pocket Casts Plus!") }
+  /// Activity tab title
+  internal static var activity: String { return L10n.tr("Localizable", "activity", fallback: "Activity") }
   /// Title for an action that allows a user to create a new bookmark
   internal static var addBookmark: String { return L10n.tr("Localizable", "add_bookmark", fallback: "Add Bookmark") }
   /// The subtitle of a view where the user can edit their bookmark title
@@ -994,6 +996,8 @@ internal enum L10n {
   internal static var editClip: String { return L10n.tr("Localizable", "edit_clip", fallback: "Edit clip") }
   /// Button label for a feature that the user can enable
   internal static var enableItNow: String { return L10n.tr("Localizable", "enable_it_now", fallback: "Enable it now") }
+  /// Entry type section header
+  internal static var entryType: String { return L10n.tr("Localizable", "entry_type", fallback: "Type") }
   /// Description shown on the final End of Year story for 2024
   internal static var eoy2024EpilogueDescription: String { return L10n.tr("Localizable", "eoy_2024_epilogue_description", fallback: "Don’t forget to share with friends and give a shout out to your favourite podcasts and creators.") }
   /// Title shown on the final End of Year story for 2024
@@ -1658,6 +1662,8 @@ internal enum L10n {
   internal static var importTitle: String { return L10n.tr("Localizable", "import_title", fallback: "Bring your\npodcasts with you") }
   /// A common string used throughout the app. Status message informing the user that the episode has been started but not finished.
   internal static var inProgress: String { return L10n.tr("Localizable", "in_progress", fallback: "In Progress") }
+  /// Input-quality percentage label on the timer
+  internal static var inputQuality: String { return L10n.tr("Localizable", "input_quality", fallback: "Input quality") }
   /// Interests screen button title for interests confirmation. The %1$@ argument is the minimum number of interests you need to select. Ex: Select at least 3
   internal static func interestsSelectAtLeast(_ p1: Any) -> String {
     return L10n.tr("Localizable", "interests_select_at_least", String(describing: p1), fallback: "Select at least %1$@")
@@ -2993,6 +2999,8 @@ internal enum L10n {
   internal static var podcastsLargeGrid: String { return L10n.tr("Localizable", "podcasts_large_grid", fallback: "Large Grid") }
   /// Title for the set of options for the presentation styles like grid sizes vs list view.
   internal static var podcastsLayout: String { return L10n.tr("Localizable", "podcasts_layout", fallback: "Layout") }
+  /// Podcasts tab — switcher: native library view
+  internal static var podcastsLibrary: String { return L10n.tr("Localizable", "podcasts_library", fallback: "Library") }
   /// Grid Items will be sorted sorted based on the users custom ordering. This is performed by dragging and dropping a podcast to the desired order.
   internal static var podcastsLibrarySortCustom: String { return L10n.tr("Localizable", "podcasts_library_sort_custom", fallback: "Drag and Drop") }
   /// Grid Items will be sorted based on the date the user subscribed to them. Newest to oldest.
@@ -3011,6 +3019,8 @@ internal enum L10n {
   internal static var podcastsList: String { return L10n.tr("Localizable", "podcasts_list", fallback: "List") }
   /// A common string used throughout the app. Refers to Podcasts in the plural form as well as the Podcasts screen.
   internal static var podcastsPlural: String { return L10n.tr("Localizable", "podcasts_plural", fallback: "Podcasts") }
+  /// Podcasts tab — switcher: recommendations from the community sheet
+  internal static var podcastsRecommendations: String { return L10n.tr("Localizable", "podcasts_recommendations", fallback: "Recommendations") }
   /// Prompt to open the menu to share your podcasts list.
   internal static var podcastsShare: String { return L10n.tr("Localizable", "podcasts_share", fallback: "Share Podcasts") }
   /// Presents the podcasts with small podcast artwork tiles.
@@ -3031,6 +3041,10 @@ internal enum L10n {
   internal static func pricingTermsAfterTrialLong(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "pricing_terms_after_trial_long", String(describing: p1), String(describing: p2), fallback: "Recurring payments will begin after your %1$@ free trial (%2$@)")
   }
+  /// Primary type: Talking
+  internal static var primaryTypeTalking: String { return L10n.tr("Localizable", "primary_type_talking", fallback: "Talking") }
+  /// Primary type: Watching
+  internal static var primaryTypeWatching: String { return L10n.tr("Localizable", "primary_type_watching", fallback: "Watching") }
   /// A common string used throughout the app. Refers to the Profile tab.
   internal static var profile: String { return L10n.tr("Localizable", "profile", fallback: "Profile") }
   /// Body of Plus promotional section
@@ -3121,6 +3135,22 @@ internal enum L10n {
   internal static var ratingWhatsNewMessage: String { return L10n.tr("Localizable", "rating_whats_new_message", fallback: "Rate your top podcasts and let creators know how much you appreciate their work. Plus, your ratings help others find new favorite shows!") }
   /// What's New sheet title
   internal static var ratingWhatsNewTitle: String { return L10n.tr("Localizable", "rating_whats_new_title", fallback: "Now Available: Podcast Ratings 🎉") }
+  /// Disambiguation sheet — title
+  internal static var recommendationChoosePodcast: String { return L10n.tr("Localizable", "recommendation_choose_podcast", fallback: "Choose podcast") }
+  /// Recommendations — generic fetch error
+  internal static var recommendationFetchFailed: String { return L10n.tr("Localizable", "recommendation_fetch_failed", fallback: "Couldn't load recommendations. Check your connection and try again.") }
+  /// Recommendations — mentions count accessibility label
+  internal static func recommendationMentionsLabel(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "recommendation_mentions_label", String(describing: p1), fallback: "%@ mentions")
+  }
+  /// Recommendations — empty disambiguation: no Pocket Casts results AND no external link
+  internal static var recommendationNoMatch: String { return L10n.tr("Localizable", "recommendation_no_match", fallback: "No matching podcast found.") }
+  /// Disambiguation sheet — bottom button to open the row's external link
+  internal static var recommendationOpenExternal: String { return L10n.tr("Localizable", "recommendation_open_external", fallback: "Open external link") }
+  /// Recommendations — error retry button
+  internal static var recommendationRetry: String { return L10n.tr("Localizable", "recommendation_retry", fallback: "Retry") }
+  /// Recommendations — empty list defensive copy
+  internal static var recommendationsEmpty: String { return L10n.tr("Localizable", "recommendations_empty", fallback: "No recommendations available.") }
   /// Referrals - Claim Guest Pass action button title
   internal static var referralsClaimGuestPassAction: String { return L10n.tr("Localizable", "referrals_claim_guest_pass_action", fallback: "Activate my pass") }
   /// Referrals - Claim Guest Pass banner message.
@@ -4159,8 +4189,6 @@ internal enum L10n {
   internal static var syncing: String { return L10n.tr("Localizable", "syncing", fallback: "Syncing...") }
   /// Talk tab title
   internal static var talk: String { return L10n.tr("Localizable", "talk", fallback: "Talk") }
-  /// Default description for a crosstalk session
-  internal static var talkCrosstalkSession: String { return L10n.tr("Localizable", "talk_crosstalk_session", fallback: "Crosstalk session") }
   /// Date section header
   internal static var talkDate: String { return L10n.tr("Localizable", "talk_date", fallback: "Date") }
   /// Description section header
@@ -4177,8 +4205,6 @@ internal enum L10n {
   internal static var talkLogManually: String { return L10n.tr("Localizable", "talk_log_manually", fallback: "Log Manually") }
   /// Navigation title for the log session summary screen
   internal static var talkLogSession: String { return L10n.tr("Localizable", "talk_log_session", fallback: "Log Session") }
-  /// Default description for an output session
-  internal static var talkOutputSession: String { return L10n.tr("Localizable", "talk_output_session", fallback: "Output session") }
   /// Pause button for talk timer
   internal static var talkPause: String { return L10n.tr("Localizable", "talk_pause", fallback: "Pause") }
   /// Header for recent talk sessions list
@@ -4195,6 +4221,14 @@ internal enum L10n {
   internal static var talkTypeCrosstalk: String { return L10n.tr("Localizable", "talk_type_crosstalk", fallback: "Crosstalk") }
   /// Talk type: output
   internal static var talkTypeOutput: String { return L10n.tr("Localizable", "talk_type_output", fallback: "Output") }
+  /// Talking field: optional user description
+  internal static var talkingDescription: String { return L10n.tr("Localizable", "talking_description", fallback: "Description (optional)") }
+  /// Talking sub-type picker section header
+  internal static var talkingSubType: String { return L10n.tr("Localizable", "talking_sub_type", fallback: "Sub-type") }
+  /// Talking sub-type: Reverse Crosstalk
+  internal static var talkingSubTypeReverseCrosstalk: String { return L10n.tr("Localizable", "talking_sub_type_reverse_crosstalk", fallback: "Reverse Crosstalk") }
+  /// Talking sub-type: Talking (output speech with no partner)
+  internal static var talkingSubTypeTalking: String { return L10n.tr("Localizable", "talking_sub_type_talking", fallback: "Talking") }
   /// Prompt to allow the user to review the Terms of Use.
   internal static var termsOfUse: String { return L10n.tr("Localizable", "terms_of_use", fallback: "Terms of Use") }
   /// Theme name for the Classic theme.
@@ -4415,6 +4449,10 @@ internal enum L10n {
   internal static var watchUpNextNoItemsSubtitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_subtitle", fallback: "You can queue episodes to play next from the episode details screen, or adding them on your phone.") }
   /// Title for the up next screen when a user has no episode queued up to play.
   internal static var watchUpNextNoItemsTitle: String { return L10n.tr("Localizable", "watch_up_next_no_items_title", fallback: "Nothing in Up Next") }
+  /// Watching field: Source (creator, channel, series)
+  internal static var watchingSource: String { return L10n.tr("Localizable", "watching_source", fallback: "Source") }
+  /// Watching field: Title (video / episode)
+  internal static var watchingTitle: String { return L10n.tr("Localizable", "watching_title", fallback: "Title") }
   /// week
   internal static var week: String { return L10n.tr("Localizable", "week", fallback: "week") }
   /// Title of a button prompting the user find new podcasts in discover

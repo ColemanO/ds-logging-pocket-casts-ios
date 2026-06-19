@@ -5842,6 +5842,39 @@
 /* Talk tab title */
 "talk" = "Talk";
 
+/* Activity tab title */
+"activity" = "Activity";
+
+/* Entry type section header */
+"entry_type" = "Type";
+
+/* Primary type: Watching */
+"primary_type_watching" = "Watching";
+
+/* Primary type: Talking */
+"primary_type_talking" = "Talking";
+
+/* Talking sub-type picker section header */
+"talking_sub_type" = "Sub-type";
+
+/* Talking sub-type: Talking (output speech with no partner) */
+"talking_sub_type_talking" = "Talking";
+
+/* Talking sub-type: Reverse Crosstalk */
+"talking_sub_type_reverse_crosstalk" = "Reverse Crosstalk";
+
+/* Watching field: Source (creator, channel, series) */
+"watching_source" = "Source";
+
+/* Watching field: Title (video / episode) */
+"watching_title" = "Title";
+
+/* Talking field: optional user description */
+"talking_description" = "Description (optional)";
+
+/* Input-quality percentage label on the timer */
+"input_quality" = "Input quality";
+
 /* Button to manually log a talk session */
 "talk_log_manually" = "Log Manually";
 
@@ -5856,12 +5889,6 @@
 
 /* Talk type: output */
 "talk_type_output" = "Output";
-
-/* Default description for a crosstalk session */
-"talk_crosstalk_session" = "Crosstalk session";
-
-/* Default description for an output session */
-"talk_output_session" = "Output session";
 
 /* Discard button on talk session summary */
 "talk_discard" = "Discard";
@@ -5895,3 +5922,30 @@
 
 /* Resume button for talk timer */
 "talk_resume" = "Resume";
+
+/* Podcasts tab — switcher: native library view */
+"podcasts_library" = "Library";
+
+/* Podcasts tab — switcher: recommendations from the community sheet */
+"podcasts_recommendations" = "Recommendations";
+
+/* Disambiguation sheet — title */
+"recommendation_choose_podcast" = "Choose podcast";
+
+/* Disambiguation sheet — bottom button to open the row's external link */
+"recommendation_open_external" = "Open external link";
+
+/* Recommendations — error retry button */
+"recommendation_retry" = "Retry";
+
+/* Recommendations — generic fetch error */
+"recommendation_fetch_failed" = "Couldn't load recommendations. Check your connection and try again.";
+
+/* Recommendations — empty disambiguation: no Pocket Casts results AND no external link */
+"recommendation_no_match" = "No matching podcast found.";
+
+/* Recommendations — empty list defensive copy */
+"recommendations_empty" = "No recommendations available.";
+
+/* Recommendations — mentions count accessibility label */
+"recommendation_mentions_label" = "%@ mentions";

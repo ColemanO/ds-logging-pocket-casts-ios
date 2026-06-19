@@ -94,8 +94,13 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         didSet {
             messageView.getBorderColor = { AppTheme.episodeMessageBorderColor(for: self.themeOverride) }
             messageView.getBgColor = { AppTheme.episodeMessageBackgroundColor(for: self.themeOverride) }
+            messageView.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(messageViewTapped))
+            messageView.addGestureRecognizer(tap)
         }
     }
+
+    var isShowingDreamingLogError: Bool = false
 
     @IBOutlet var messageIcon: UIImageView!
     @IBOutlet var messageTitle: ThemeableLabel! {
@@ -243,6 +248,7 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         addCustomObserver(ServerNotifications.episodeTypeOrLengthChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
 
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(generalEpisodeEventDidFire))
+        addCustomObserver(Constants.Notifications.dreamingLogStatusChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
 
         AnalyticsHelper.episodeOpened(podcastUuid: episode.podcastUuid, episodeUuid: episode.uuid)
     }
