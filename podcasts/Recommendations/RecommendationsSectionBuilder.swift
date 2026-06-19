@@ -40,7 +40,7 @@ enum RecommendationsSectionBuilder {
             let notes = column(row, 5).nonEmpty
             let otherLinks = column(row, 6).nonEmpty
 
-            current?.recommendations.append(Recommendation(
+            let rec = Recommendation(
                 title: title,
                 location: location,
                 mentions: mentions,
@@ -48,7 +48,9 @@ enum RecommendationsSectionBuilder {
                 region: region,
                 notes: notes,
                 otherLinks: otherLinks
-            ))
+            )
+            guard rec.spotifyURL != nil else { continue }
+            current?.recommendations.append(rec)
         }
 
         if let finished = current {

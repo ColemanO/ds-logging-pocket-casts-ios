@@ -31,6 +31,16 @@ struct Recommendation: Identifiable, Codable, Equatable {
         self.otherLinks = otherLinks
     }
 
+    /// Extracts the first `open.spotify.com/show/…` URL from `otherLinks`.
+    var spotifyURL: URL? {
+        guard let raw = otherLinks?.trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }
+        return raw.components(separatedBy: CharacterSet(charactersIn: " ,\n"))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .compactMap { URL(string: $0) }
+            .first { $0.host == "open.spotify.com" && $0.pathComponents.contains("show") }
+    }
+
     /// Stable key for the match cache. Lowercased + whitespace-collapsed title.
     var matchKey: String {
         title.lowercased()
