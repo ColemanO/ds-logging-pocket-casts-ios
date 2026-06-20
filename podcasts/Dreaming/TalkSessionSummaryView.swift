@@ -31,6 +31,8 @@ struct TalkSessionSummaryView: View {
     @State private var date: Date = Date()
     @State private var isLogging: Bool = false
     @State private var showError: Bool = false
+    @State private var youtubeUrl: String = ""
+    @State private var isFetchingYoutube: Bool = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -160,6 +162,25 @@ struct TalkSessionSummaryView: View {
         switch primaryType {
         case .watching:
             Section {
+                HStack {
+                    TextField("YouTube URL", text: $youtubeUrl)
+                        .foregroundColor(theme.primaryText01)
+                        .autocorrectionDisabled()
+                        .onChange(of: youtubeUrl) { newValue in
+                            fetchYouTubeDetailsIfNeeded(url: newValue)
+                        }
+                    if isFetchingYoutube {
+                        ProgressView()
+                            .tint(theme.primaryInteractive01)
+                    }
+                }
+            } header: {
+                Text("YouTube")
+                    .foregroundColor(theme.primaryText02)
+            }
+            .listRowBackground(theme.primaryUi02)
+
+            Section {
                 TextField(L10n.watchingSource, text: $watchingSource)
                     .foregroundColor(theme.primaryText01)
                     .focused($focusedField, equals: .watchingSource)
@@ -256,15 +277,43 @@ struct TalkSessionSummaryView: View {
         .listRowBackground(theme.primaryUi02)
     }
 
+    // MARK: - YouTube Auto-fill
+
+    private func fetchYouTubeDetailsIfNeeded(url: String) {
+        guard let videoId = YouTubeManager.extractVideoId(from: url),
+              let apiKey = DreamingManager.shared.getYouTubeApiKey() else { return }
+
+        isFetchingYoutube = true
+        YouTubeManager.fetchVideoDetails(videoId: videoId, apiKey: apiKey) { details in
+            DispatchQueue.main.async {
+                isFetchingYoutube = false
+                guard let details = details else { return }
+                if watchingSource.trimmingCharacters(in: .whitespaces).isEmpty {
+                    watchingSource = details.channelTitle
+                }
+                if watchingTitle.trimmingCharacters(in: .whitespaces).isEmpty {
+                    watchingTitle = details.title
+                }
+                if minutes.trimmingCharacters(in: .whitespaces).isEmpty {
+                    let total = Int(details.durationSeconds)
+                    minutes = "\(total / 60)"
+                    seconds = "\(total % 60)"
+                }
+            }
+        }
+    }
+
     // MARK: - Submission
 
     private func logSession() {
         isLogging = true
+        let videoUrl = youtubeUrl.trimmingCharacters(in: .whitespaces).isEmpty ? nil : youtubeUrl.trimmingCharacters(in: .whitespaces)
         DreamingManager.shared.logExternalEntry(
             type: kind.apiType,
             description: kind.encodedDescription,
             timeSeconds: totalSeconds,
-            date: date
+            date: date,
+            videoUrl: videoUrl
         ) { success in
             isLogging = false
             if success {

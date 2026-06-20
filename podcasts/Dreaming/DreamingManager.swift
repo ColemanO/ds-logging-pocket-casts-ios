@@ -6,6 +6,7 @@ class DreamingManager {
     static let shared = DreamingManager()
 
     private let keychainKey = "dreamingBearerToken"
+    private let youtubeApiKeyKeychainKey = "youtubeApiKey"
     private let statusDefaultsKey = "DreamingEpisodeLogStatus"
     private let errorDefaultsKey = "DreamingEpisodeLogErrors"
 
@@ -80,6 +81,26 @@ class DreamingManager {
             NotificationCenter.default.post(name: Constants.Notifications.dreamingTokenChanged, object: nil)
         }
         return result
+    }
+
+    // MARK: - YouTube API Key
+
+    var hasYouTubeApiKey: Bool {
+        getYouTubeApiKey() != nil
+    }
+
+    func getYouTubeApiKey() -> String? {
+        try? KeychainHelper.string(for: youtubeApiKeyKeychainKey)
+    }
+
+    @discardableResult
+    func saveYouTubeApiKey(_ key: String) -> Bool {
+        KeychainHelper.save(string: key, key: youtubeApiKeyKeychainKey, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+    }
+
+    @discardableResult
+    func removeYouTubeApiKey() -> Bool {
+        KeychainHelper.removeKey(youtubeApiKeyKeychainKey)
     }
 
     // MARK: - Episode Status Tracking
@@ -702,7 +723,7 @@ class DreamingManager {
 
     // MARK: - Manual Entry Logging
 
-    func logExternalEntry(type: String, description: String, timeSeconds: Double, date: Date, completion: @escaping (Bool) -> Void) {
+    func logExternalEntry(type: String, description: String, timeSeconds: Double, date: Date, videoUrl: String? = nil, completion: @escaping (Bool) -> Void) {
         guard let token = getToken() else {
             FileLog.shared.addMessage("Dreaming: No token configured, skipping external entry log")
             DispatchQueue.main.async { completion(false) }
@@ -725,7 +746,7 @@ class DreamingManager {
             "date": dateString,
             "today": todayString,
             "idempotencyKey": idempotencyKey,
-            "externalVideoUrl": ""
+            "externalVideoUrl": videoUrl ?? ""
         ]
 
         guard let url = URL(string: "https://app.dreaming.com/.netlify/functions/externalTime?language=es"),

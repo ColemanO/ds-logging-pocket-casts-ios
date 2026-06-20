@@ -72,7 +72,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             case .foldersHistory:
                 return (L10n.foldersHistory, .init(named: "folder-empty"))
             case .dreaming:
-                return ("Dreaming", UIImage(systemName: "moon.zzz.fill"))
+                return ("Auth Settings", UIImage(systemName: "key.fill"))
             }
         }
     }
