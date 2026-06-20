@@ -14,8 +14,13 @@ struct TalkSessionSummaryView: View {
         }
     }
 
+    private enum Field: Hashable {
+        case watchingSource, watchingTitle, talkingDescription
+    }
+
     @EnvironmentObject var theme: Theme
 
+    @FocusState private var focusedField: Field?
     @State private var minutes: String
     @State private var seconds: String
     @State private var primaryType: PrimaryType
@@ -142,6 +147,14 @@ struct TalkSessionSummaryView: View {
         .listRowBackground(theme.primaryUi02)
     }
 
+    private func suggestions(from pool: [String], matching query: String) -> [String] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        return Array(pool
+            .filter { $0.localizedCaseInsensitiveContains(q) && $0.lowercased() != q.lowercased() }
+            .prefix(4))
+    }
+
     @ViewBuilder
     private var conditionalFieldsSection: some View {
         switch primaryType {
@@ -149,8 +162,28 @@ struct TalkSessionSummaryView: View {
             Section {
                 TextField(L10n.watchingSource, text: $watchingSource)
                     .foregroundColor(theme.primaryText01)
+                    .focused($focusedField, equals: .watchingSource)
+                if focusedField == .watchingSource {
+                    ForEach(suggestions(from: DreamingManager.shared.suggestedWatchingSources, matching: watchingSource), id: \.self) { s in
+                        Button(s) {
+                            watchingSource = s
+                            focusedField = nil
+                        }
+                        .foregroundColor(theme.primaryInteractive01)
+                    }
+                }
                 TextField(L10n.watchingTitle, text: $watchingTitle)
                     .foregroundColor(theme.primaryText01)
+                    .focused($focusedField, equals: .watchingTitle)
+                if focusedField == .watchingTitle {
+                    ForEach(suggestions(from: DreamingManager.shared.suggestedWatchingTitles, matching: watchingTitle), id: \.self) { s in
+                        Button(s) {
+                            watchingTitle = s
+                            focusedField = nil
+                        }
+                        .foregroundColor(theme.primaryInteractive01)
+                    }
+                }
             } header: {
                 Text(L10n.primaryTypeWatching)
                     .foregroundColor(theme.primaryText02)
@@ -168,6 +201,16 @@ struct TalkSessionSummaryView: View {
 
                 TextField(L10n.talkingDescription, text: $talkingUserDescription)
                     .foregroundColor(theme.primaryText01)
+                    .focused($focusedField, equals: .talkingDescription)
+                if focusedField == .talkingDescription {
+                    ForEach(suggestions(from: DreamingManager.shared.suggestedTalkingDescriptions, matching: talkingUserDescription), id: \.self) { s in
+                        Button(s) {
+                            talkingUserDescription = s
+                            focusedField = nil
+                        }
+                        .foregroundColor(theme.primaryInteractive01)
+                    }
+                }
             } header: {
                 Text(L10n.talkingSubType)
                     .foregroundColor(theme.primaryText02)

@@ -657,6 +657,49 @@ class DreamingManager {
         }.resume()
     }
 
+    // MARK: - Entry Suggestions
+
+    #if !os(watchOS)
+    /// Unique watching sources from cached entries, most-recent first.
+    var suggestedWatchingSources: [String] {
+        guard let entries = cachedExternalTimes else { return [] }
+        var seen = Set<String>()
+        var result: [String] = []
+        for entry in entries.reversed() {
+            guard case .watching(let source, _) = ManualEntryKind.decode(apiType: entry.type, description: entry.description),
+                  !source.isEmpty, seen.insert(source.lowercased()).inserted else { continue }
+            result.append(source)
+        }
+        return result
+    }
+
+    /// Unique watching titles from cached entries, most-recent first.
+    var suggestedWatchingTitles: [String] {
+        guard let entries = cachedExternalTimes else { return [] }
+        var seen = Set<String>()
+        var result: [String] = []
+        for entry in entries.reversed() {
+            guard case .watching(_, let title) = ManualEntryKind.decode(apiType: entry.type, description: entry.description),
+                  !title.isEmpty, seen.insert(title.lowercased()).inserted else { continue }
+            result.append(title)
+        }
+        return result
+    }
+
+    /// Unique talking user-descriptions from cached entries, most-recent first.
+    var suggestedTalkingDescriptions: [String] {
+        guard let entries = cachedExternalTimes else { return [] }
+        var seen = Set<String>()
+        var result: [String] = []
+        for entry in entries.reversed() {
+            guard case .talking(_, let desc?) = ManualEntryKind.decode(apiType: entry.type, description: entry.description),
+                  seen.insert(desc.lowercased()).inserted else { continue }
+            result.append(desc)
+        }
+        return result
+    }
+    #endif
+
     // MARK: - Manual Entry Logging
 
     func logExternalEntry(type: String, description: String, timeSeconds: Double, date: Date, completion: @escaping (Bool) -> Void) {

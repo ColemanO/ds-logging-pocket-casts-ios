@@ -90,6 +90,31 @@ When working in this area, review:
 - `podcasts/Constants.swift`
 - `podcasts/SettingsViewController.swift`
 
+## Adding New Swift Files to the Xcode Project
+
+Every new `.swift` file placed under `podcasts/` (or any other compiled target directory) **must** also be registered in `podcasts.xcodeproj` or the build will silently ignore it. Use the `xcodeproj` gem (already available via Bundler) to do this from the command line:
+
+```bash
+bundle exec ruby - <<'RUBY'
+require 'xcodeproj'
+project = Xcodeproj::Project.open('podcasts.xcodeproj')
+
+# Adjust the subpath to match where the file lives, e.g. 'podcasts/Dreaming'
+group = project.main_group.find_subpath('podcasts/Dreaming', true)
+file_ref = group.new_reference('NewFile.swift')
+
+target = project.targets.find { |t| t.name == 'podcasts' }
+target.source_build_phase.add_file_reference(file_ref)
+
+project.save
+puts "Registered NewFile.swift in podcasts target"
+RUBY
+```
+
+Replace `'podcasts/Dreaming'` with the actual group path and `'NewFile.swift'` with the actual filename. Run this immediately after writing the file, then verify with `grep 'NewFile' podcasts.xcodeproj/project.pbxproj`.
+
+**Watch target caveat:** `DreamingManager.swift` is compiled into both the main `podcasts` target and the `Pocket Casts Watch App` target. If code added to `DreamingManager.swift` references types that only exist in the main iOS target (e.g. `ManualEntryKind`), guard those additions with `#if !os(watchOS)`. The same applies to any other file shared between targets — check for duplicate build file entries in `project.pbxproj` before referencing iOS-only types.
+
 ## Practical Guidance
 
 - Prefer project entry points and existing make targets over custom one-off commands.
