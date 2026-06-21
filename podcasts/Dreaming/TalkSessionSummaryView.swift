@@ -21,8 +21,7 @@ struct TalkSessionSummaryView: View {
     @EnvironmentObject var theme: Theme
 
     @FocusState private var focusedField: Field?
-    @State private var minutes: String
-    @State private var seconds: String
+    @State private var duration: TimeInterval
     @State private var primaryType: PrimaryType
     @State private var subType: TalkingSubType
     @State private var watchingSource: String
@@ -41,14 +40,7 @@ struct TalkSessionSummaryView: View {
     init(durationSeconds: Double? = nil, initialKind: ManualEntryKind? = nil, onLogged: (() -> Void)? = nil) {
         self.onLogged = onLogged
 
-        if let duration = durationSeconds {
-            let totalSeconds = Int(duration)
-            _minutes = State(initialValue: "\(totalSeconds / 60)")
-            _seconds = State(initialValue: "\(totalSeconds % 60)")
-        } else {
-            _minutes = State(initialValue: "")
-            _seconds = State(initialValue: "0")
-        }
+        _duration = State(initialValue: durationSeconds ?? 0)
 
         // Populate type-specific fields from initialKind if provided.
         switch initialKind {
@@ -73,11 +65,7 @@ struct TalkSessionSummaryView: View {
         }
     }
 
-    private var totalSeconds: Double {
-        let m = Double(minutes) ?? 0
-        let s = Double(seconds) ?? 0
-        return m * 60 + s
-    }
+    private var totalSeconds: Double { duration }
 
     private var kind: ManualEntryKind {
         switch primaryType {
@@ -92,10 +80,9 @@ struct TalkSessionSummaryView: View {
     var body: some View {
         NavigationView {
             Form {
-                durationSection
+                whenSection
                 typeSection
-                conditionalFieldsSection
-                dateSection
+                detailsSection
                 buttonsSection
             }
             .scrollContentBackground(.hidden)
@@ -111,24 +98,14 @@ struct TalkSessionSummaryView: View {
 
     // MARK: - Sections
 
-    private var durationSection: some View {
+    private var whenSection: some View {
         Section {
-            HStack {
-                TextField("min", text: $minutes)
-                    .keyboardType(.numberPad)
-                    .frame(width: 60)
-                    .foregroundColor(theme.primaryText01)
-                Text("m")
-                    .foregroundColor(theme.primaryText02)
-                TextField("sec", text: $seconds)
-                    .keyboardType(.numberPad)
-                    .frame(width: 60)
-                    .foregroundColor(theme.primaryText01)
-                Text("s")
-                    .foregroundColor(theme.primaryText02)
-            }
+            DurationPicker(duration: $duration)
+                .frame(maxWidth: .infinity)
+            DatePicker(L10n.talkDate, selection: $date, displayedComponents: .date)
+                .foregroundColor(theme.primaryText01)
         } header: {
-            Text(L10n.talkDuration)
+            Text("When")
                 .foregroundColor(theme.primaryText02)
         }
         .listRowBackground(theme.primaryUi02)
@@ -141,7 +118,16 @@ struct TalkSessionSummaryView: View {
                     Text(type.displayName).tag(type)
                 }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
+
+            if primaryType == .talking {
+                Picker(L10n.talkingSubType, selection: $subType) {
+                    Text(L10n.talkingSubTypeTalking).tag(TalkingSubType.talking)
+                    Text(L10n.talkTypeCrosstalk).tag(TalkingSubType.crosstalk)
+                    Text(L10n.talkingSubTypeReverseCrosstalk).tag(TalkingSubType.reverseCrosstalk)
+                }
+                .pickerStyle(.menu)
+            }
         } header: {
             Text(L10n.entryType)
                 .foregroundColor(theme.primaryText02)
@@ -158,7 +144,7 @@ struct TalkSessionSummaryView: View {
     }
 
     @ViewBuilder
-    private var conditionalFieldsSection: some View {
+    private var detailsSection: some View {
         switch primaryType {
         case .watching:
             Section {
@@ -174,14 +160,7 @@ struct TalkSessionSummaryView: View {
                             .tint(theme.primaryInteractive01)
                     }
                 }
-            } header: {
-                Text("YouTube")
-                    .foregroundColor(theme.primaryText02)
-            }
-            .listRowBackground(theme.primaryUi02)
-
-            Section {
-                TextField(L10n.watchingSource, text: $watchingSource)
+                TextField("Channel/Series", text: $watchingSource)
                     .foregroundColor(theme.primaryText01)
                     .focused($focusedField, equals: .watchingSource)
                 if focusedField == .watchingSource {
@@ -206,20 +185,13 @@ struct TalkSessionSummaryView: View {
                     }
                 }
             } header: {
-                Text(L10n.primaryTypeWatching)
+                Text("Details")
                     .foregroundColor(theme.primaryText02)
             }
             .listRowBackground(theme.primaryUi02)
 
         case .talking:
             Section {
-                Picker(L10n.talkingSubType, selection: $subType) {
-                    Text(L10n.talkingSubTypeTalking).tag(TalkingSubType.talking)
-                    Text(L10n.talkTypeCrosstalk).tag(TalkingSubType.crosstalk)
-                    Text(L10n.talkingSubTypeReverseCrosstalk).tag(TalkingSubType.reverseCrosstalk)
-                }
-                .pickerStyle(.segmented)
-
                 TextField(L10n.talkingDescription, text: $talkingUserDescription)
                     .foregroundColor(theme.primaryText01)
                     .focused($focusedField, equals: .talkingDescription)
@@ -233,22 +205,11 @@ struct TalkSessionSummaryView: View {
                     }
                 }
             } header: {
-                Text(L10n.talkingSubType)
+                Text("Description")
                     .foregroundColor(theme.primaryText02)
             }
             .listRowBackground(theme.primaryUi02)
         }
-    }
-
-    private var dateSection: some View {
-        Section {
-            DatePicker(L10n.talkDate, selection: $date, displayedComponents: .date)
-                .foregroundColor(theme.primaryText01)
-        } header: {
-            Text(L10n.talkDate)
-                .foregroundColor(theme.primaryText02)
-        }
-        .listRowBackground(theme.primaryUi02)
     }
 
     private var buttonsSection: some View {
@@ -294,11 +255,7 @@ struct TalkSessionSummaryView: View {
                 if watchingTitle.trimmingCharacters(in: .whitespaces).isEmpty {
                     watchingTitle = details.title
                 }
-                if minutes.trimmingCharacters(in: .whitespaces).isEmpty {
-                    let total = Int(details.durationSeconds)
-                    minutes = "\(total / 60)"
-                    seconds = "\(total % 60)"
-                }
+                duration = details.durationSeconds
             }
         }
     }

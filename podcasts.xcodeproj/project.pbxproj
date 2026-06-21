@@ -89,6 +89,7 @@
 		1B0B5B1B2F9D7A0000DB2B42 /* RecommendationsDiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0B5B1A2F9D7A0000DB2B42 /* RecommendationsDiscoverView.swift */; };
 		1B2A05852F35BB0300887710 /* DreamingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* DreamingManager.swift */; };
 		2F63CE9528809E5B00A34B51 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F63CE9428809E5A00A34B51 /* ThemeTests.swift */; };
+		2F88EAB4075157DE6F363479 /* DurationPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878A07F29297E0818A7962A9 /* DurationPicker.swift */; };
 		2F90990E2A4F88B10044FC55 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F90990D2A4F88B10044FC55 /* ShareViewController.swift */; };
 		2F9099112A4F88B10044FC55 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F90990F2A4F88B10044FC55 /* MainInterface.storyboard */; };
 		32163E602B1EBDB6009BB16B /* DatabaseExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32163E5F2B1EBDB6009BB16B /* DatabaseExport.swift */; };
@@ -2740,7 +2741,7 @@
 		46FBD8CD276A876900867746 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Intents.strings; sourceTree = "<group>"; };
 		46FBD8CF276A876B00867746 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Intents.strings; sourceTree = "<group>"; };
 		46FBD8D1276A876D00867746 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Intents.strings; sourceTree = "<group>"; };
-		484C1E275A5B449922254DFB /* YouTubeManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YouTubeManager.swift; sourceTree = "<group>"; };
+		878A07F29297E0818A7962A9 /* DurationPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DurationPicker.swift; sourceTree = "<group>"; };
 		8B0125672912A7AB00EC427A /* StoryShareableText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryShareableText.swift; sourceTree = "<group>"; };
 		8B087FC829DC976F0027EAE5 /* PodcastImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastImage.swift; sourceTree = "<group>"; };
 		8B087FCA29DE08460027EAE5 /* UpgradeLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeLandingView.swift; sourceTree = "<group>"; };
@@ -4519,13 +4520,6 @@
 			path = Recommendations;
 			sourceTree = "<group>";
 		};
-		2F7E575976646D3EBCD4B9FF /* Dreaming */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Dreaming;
-			sourceTree = "<group>";
-		};
 		2F90990C2A4F88B10044FC55 /* Share Extension */ = {
 			isa = PBXGroup;
 			children = (
@@ -5822,6 +5816,7 @@
 				AA0000000000000000000008 /* DreamingProgressViewController.swift */,
 				AA0000000000000000000002 /* DreamingSettingsViewController.swift */,
 				F4B0E92AC3668874AF71DAD2 /* YouTubeManager.swift */,
+				878A07F29297E0818A7962A9 /* DurationPicker.swift */,
 			);
 			path = Dreaming;
 			sourceTree = "<group>";
@@ -11525,6 +11520,7 @@
 				FF54BCA92C5A2F3900A342E5 /* TranscriptFormat.swift in Sources */,
 				9E2A72C35884B71C45856DFA /* VoiceBoostN.c in Sources */,
 				17CF1F4F7FC96429924848D5 /* YouTubeManager.swift in Sources */,
+				2F88EAB4075157DE6F363479 /* DurationPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

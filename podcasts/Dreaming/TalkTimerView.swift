@@ -56,13 +56,13 @@ struct TalkTimerView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 24) {
-                    typePickerSection
                     Spacer()
                     timerDisplay
                     adjustButtons
                     controls
                     Spacer()
                     percentageStepper
+                    typePickerSection
                 }
                 .padding()
             }
@@ -100,23 +100,42 @@ struct TalkTimerView: View {
     // MARK: - Type Pickers
 
     private var typePickerSection: some View {
-        VStack(spacing: 8) {
-            Picker(L10n.entryType, selection: $primaryType) {
-                ForEach(PrimaryType.allCases) { type in
-                    Text(type.displayName).tag(type)
+        VStack(spacing: 0) {
+            pickerRow(label: L10n.entryType) {
+                Picker(L10n.entryType, selection: $primaryType) {
+                    ForEach(PrimaryType.allCases) { type in
+                        Text(type.displayName).tag(type)
+                    }
                 }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.segmented)
 
             if primaryType == .talking {
-                Picker(L10n.talkingSubType, selection: $subType) {
-                    Text(L10n.talkingSubTypeTalking).tag(TalkingSubType.talking)
-                    Text(L10n.talkTypeCrosstalk).tag(TalkingSubType.crosstalk)
-                    Text(L10n.talkingSubTypeReverseCrosstalk).tag(TalkingSubType.reverseCrosstalk)
+                Divider()
+                    .background(theme.primaryUi05)
+                pickerRow(label: L10n.talkingSubType) {
+                    Picker(L10n.talkingSubType, selection: $subType) {
+                        Text(L10n.talkingSubTypeTalking).tag(TalkingSubType.talking)
+                        Text(L10n.talkTypeCrosstalk).tag(TalkingSubType.crosstalk)
+                        Text(L10n.talkingSubTypeReverseCrosstalk).tag(TalkingSubType.reverseCrosstalk)
+                    }
+                    .pickerStyle(.menu)
                 }
-                .pickerStyle(.segmented)
             }
         }
+        .background(theme.primaryUi02)
+        .cornerRadius(10)
+    }
+
+    private func pickerRow<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack {
+            Text(label)
+                .foregroundColor(theme.primaryText01)
+            Spacer()
+            content()
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 44)
     }
 
     // MARK: - Timer Display
